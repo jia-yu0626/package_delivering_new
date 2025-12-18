@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block title %}追蹤結果{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="card">
+        <div
+            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+            <div>
+                <h2 style="margin-bottom: 0.5rem;">{{ package.tracking_number }}</h2>
+                <span
+                    style="padding: 0.25rem 0.75rem; background: var(--primary-color); color: #000; border-radius: 4px; font-weight: 600; font-size: 0.875rem;">
+                    {{ package.status_label }}
+                </span>
+            </div>
+            <div style="text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 0.5rem;">
+                <div>
+                    <p style="color: var(--text-muted); margin-bottom: 0;">預計送達</p>
+                    <h3 style="margin-bottom: 0;">{{ package.estimated_delivery.strftime('%Y-%m-%d') if
+                        package.estimated_delivery else '計算中...' }}</h3>
+                </div>
+                <a href="{{ url_for('main.track') }}" class="btn btn-outline"
+                    style="font-size: 0.875rem; padding: 0.5rem 1rem;">
+                    <i class="fas fa-search"></i> 查詢其他
+                </a>
+                {% if session.get('user_role') in ['driver', 'warehouse', 'admin'] %}
+                <a href="{{ url_for('main.edit_package', tracking_number=package.tracking_number) }}"
+                    class="btn btn-primary" style="font-size: 0.875rem; padding: 0.5rem 1rem;">
+                    <i class="fas fa-edit"></i> 編輯屬性
+                </a>
+                {% endif %}
+            </div>
+        </div>
+
+        <div
+            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 3rem; padding: 1.5rem; background: rgba(255,255,255,0.03); border-radius: 8px;">
+            <div>
+                <p style="color: var(--text-muted); font-size: 0.875rem;">寄件人</p>
+                <p>{{ package.sender.full_name }}</p>
+            </div>
+            <div>
+                <p style="color: var(--text-muted); font-size: 0.875rem;">收件人</p>
+                <p>{{ package.recipient_name }}</p>
+            </div>
+            <div>
+                <p style="color: var(--text-muted); font-size: 0.875rem;">服務類型</p>
+                <p>{{ package.delivery_speed_label }}</p>
+            </div>
+            <div>
+                <p style="color: var(--text-muted); font-size: 0.875rem;">重量</p>
+                <p>{{ package.weight }} kg</p>
+            </div>
+        </div>
+
+        <h3>運送進度</h3>
+        <div class="timeline" style="margin-top: 2rem;">
+            {% for event in package.tracking_events|sort(attribute='timestamp', reverse=True) %}
+            <div class="timeline-item {% if loop.first %}active{% endif %}">
+                <div class="timeline-date">{{ event.timestamp.strftime('%Y-%m-%d %H:%M') }}</div>
+                <div class="timeline-status">{{ event.status_label }}</div>
+                <div class="timeline-location"><i class="fas fa-map-marker-alt"></i> {{ event.location }}</div>
+                <p style="color: var(--text-muted); margin-top: 0.5rem;">{{ event.description }}</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    {% if session.get('user_role') in ['driver', 'warehouse', 'admin'] %}
+    <div class="card">
+        <h3>更新包裹狀態 / 回報異常 (員工專用)</h3>
+        <form action="{{ url_for('main.update_status', tracking_number=package.tracking_number) }}" method="POST">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div class="form-group">
+                    <label class="form-label">狀態</label>
+                    <select name="status" class="form-control">
+                        <option value="PICKED_UP" {% if package.status.name=='PICKED_UP' %}selected{% endif %}>已取件
+                            (Picked Up)</option>
+                        <option value="IN_TRANSIT" {% if package.status.name=='IN_TRANSIT' %}selected{% endif %}>運送中 (In
+                            Transit)</option>
+                        <option value="SORTING" {% if package.status.name=='SORTING' %}selected{% endif %}>分揀中 (Sorting)
+                        </option>
+                        <option value="OUT_FOR_DELIVERY" {% if package.status.name=='OUT_FOR_DELIVERY' %}selected{%
+                            endif %}>派送中 (Out for Delivery)</option>
+                        <option value="DELIVERED" {% if package.status.name=='DELIVERED' %}selected{% endif %}>已送達
+                            (Delivered)</option>
+                        <option disabled>--- 異常回報 ---</option>
+                        <option value="EXCEPTION" {% if package.status.name=='EXCEPTION' %}selected{% endif %}>異常-其他
+                            (Exception)</option>
+                        <option value="LOST" {% if package.status.name=='LOST' %}selected{% endif %}>異常-遺失 (Lost)
+                        </option>
+                        <option value="DELAYED" {% if package.status.name=='DELAYED' %}selected{% endif %}>異常-延誤
+                            (Delayed)</option>
+                        <option value="DAMAGED" {% if package.status.name=='DAMAGED' %}selected{% endif %}>異常-損毀
+                            (Damaged)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">地點</label>
+                    <input type="text" name="location" class="form-control" required>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">描述</label>
+                <input type="text" name="description" class="form-control" required>
+            </div>
+            <button type="submit" class="btn btn-primary">更新狀態</button>
+        </form>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

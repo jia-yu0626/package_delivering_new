@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}使用者權限管理{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div style="margin-bottom: 2rem;">
+        <a href="{{ url_for('main.dashboard') }}" style="color: var(--text-muted); text-decoration: none;">&larr;
+            返回儀表板</a>
+    </div>
+
+    <h2 style="margin-bottom: 2rem;">使用者權限管理 (User Management)</h2>
+
+    <div class="card">
+        <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+                <tr style="border-bottom: 1px solid var(--border-color); text-align: left;">
+                    <th style="padding: 1rem;">ID</th>
+                    <th style="padding: 1rem;">使用者名稱</th>
+                    <th style="padding: 1rem;">全名</th>
+                    <th style="padding: 1rem;">Email</th>
+                    <th style="padding: 1rem;">目前角色</th>
+                    <th style="padding: 1rem;">操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                    <form method="POST">
+                        <input type="hidden" name="user_id" value="{{ user.id }}">
+                        <td style="padding: 1rem;">{{ user.id }}</td>
+                        <td style="padding: 1rem;">{{ user.username }}</td>
+                        <td style="padding: 1rem;">{{ user.full_name }}</td>
+                        <td style="padding: 1rem;">{{ user.email }}</td>
+                        <td style="padding: 1rem;">
+                            <select name="role" class="form-control" style="padding: 0.25rem;">
+                                {% for role in roles %}
+                                <option value="{{ role }}" {% if user.role.name==role %}selected{% endif %}>{{ role }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </td>
+                        <td style="padding: 1rem;">
+                            <button type="submit" class="btn btn-primary"
+                                style="padding: 0.25rem 0.75rem; font-size: 0.8rem;">更新</button>
+                        </td>
+                    </form>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

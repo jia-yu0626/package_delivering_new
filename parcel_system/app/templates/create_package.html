@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+
+{% block title %}寄送包裹{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="card" style="max-width: 800px; margin: 0 auto;">
+        <h2 style="margin-bottom: 2rem; text-align: center;">建立新包裹</h2>
+
+        <form method="POST">
+            <h4
+                style="color: var(--primary-color); margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+                收件人資訊</h4>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div class="form-group">
+                    <label class="form-label">姓名</label>
+                    <input type="text" name="recipient_name" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">電話</label>
+                    <input type="text" name="recipient_phone" class="form-control" required>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">地址</label>
+                <input type="text" name="recipient_address" class="form-control" required>
+            </div>
+
+            <h4
+                style="color: var(--primary-color); margin: 2rem 0 1rem 0; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+                包裹詳情</h4>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div class="form-group">
+                    <label class="form-label">重量 (kg)</label>
+                    <input type="number" step="0.1" min="0.1" name="weight" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">內容物描述</label>
+                    <input type="text" name="content_description" class="form-control">
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;">
+                <div class="form-group">
+                    <label class="form-label">長 (cm)</label>
+                    <input type="number" step="1" min="1" name="length" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">寬 (cm)</label>
+                    <input type="number" step="1" min="1" name="width" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">高 (cm)</label>
+                    <input type="number" step="1" min="1" name="height" class="form-control" required>
+                </div>
+            </div>
+
+            <h4
+                style="color: var(--primary-color); margin: 2rem 0 1rem 0; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+                服務選項</h4>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div class="form-group">
+                    <label class="form-label">包裹類型</label>
+                    <select name="package_type" class="form-control">
+                        <option value="ENVELOPE">平郵信封</option>
+                        <option value="SMALL_BOX">小型箱</option>
+                        <option value="MEDIUM_BOX">中型箱</option>
+                        <option value="LARGE_BOX">大型箱</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">配送速度</label>
+                    <select name="delivery_speed" class="form-control">
+                        <option value="STANDARD">標準速遞</option>
+                        <option value="OVERNIGHT">隔夜達</option>
+                        <option value="TWO_DAY">兩日達</option>
+                        <option value="ECONOMY">經濟速遞</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-top: 1rem; display: flex; gap: 1.5rem; flex-wrap: wrap;">
+                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                    <input type="checkbox" name="is_fragile" value="1">
+                    <span>易碎品 (Fragile)</span>
+                </label>
+                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                    <input type="checkbox" name="is_hazardous" value="1">
+                    <span>危險物品 (Hazardous)</span>
+                </label>
+                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                    <input type="checkbox" name="is_international" value="1">
+                    <span>國際貨件要求 (International)</span>
+                </label>
+            </div>
+
+            <h4
+                style="color: var(--primary-color); margin: 2rem 0 1rem 0; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+                付款方式 (Payment)</h4>
+
+            {% if user.customer_type.name == 'CONTRACT' %}
+            <div style="background-color: #e3f2fd; padding: 1rem; border-radius: 4px; color: #0d47a1;">
+                <strong>合約客戶 (Contract)</strong>: 費用將計入月結單 (Monthly Settlement)。<br>
+                <strong>餘額帳號 (Balance Account)</strong>: {{ user.id|string|zfill(8) }}
+            </div>
+            {% elif user.customer_type.name == 'PREPAID' %}
+            <div style="background-color: #e8f5e9; padding: 1rem; border-radius: 4px; color: #1b5e20;">
+                <p><strong>預付客戶 (Prepaid)</strong>: 費用將從餘額扣除 (Deduct from Balance)。</p>
+                <p>目前餘額: ${{ user.balance }}</p>
+                <div class="form-group" style="margin-top: 1rem;">
+                    <label class="form-label">第三方付款帳號 (Third-party Payment Account) <span
+                            style="color: red;">*</span></label>
+                    <input type="text" name="third_party_account" class="form-control" placeholder="請輸入第三方付款帳號"
+                        required>
+                </div>
+            </div>
+            {% else %}
+            <div class="form-group">
+                <label class="form-label">選擇付款方式 (Select Payment Method)</label>
+                <select name="payment_method" class="form-control">
+                    <option value="CASH">現金 (Cash)</option>
+                    <option value="CREDIT_CARD">信用卡 (Credit Card)</option>
+                    <option value="MOBILE_PAYMENT">行動支付 (Mobile Payment)</option>
+                </select>
+            </div>
+            {% endif %}
+
+            <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 2rem;">建立訂單</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

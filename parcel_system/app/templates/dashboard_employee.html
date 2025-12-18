@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}員工儀表板{% endblock %}
+
+{% block content %}
+<div class="container">
+    {% if is_driver %}
+    <h2 style="margin-bottom: 2rem;">司機派送清單 (My Deliveries)</h2>
+    <p style="color: var(--text-muted);">顯示「派送中」或「分揀中(可取件)」的包裹。</p>
+    {% else %}
+    <h2 style="margin-bottom: 2rem;">員工儀表板 - 近期包裹</h2>
+    <div style="margin-bottom: 2rem;">
+        <form action="{{ url_for('main.auto_assign') }}" method="post" style="display: inline;">
+            <button type="submit" class="btn btn-primary">
+                自動分配包裹給司機 (Auto Assign Packages)
+            </button>
+        </form>
+    </div>
+    {% endif %}
+
+    <div class="card">
+        <table style="width: 100%; border-collapse: collapse; color: #fff;">
+            <thead>
+                <tr style="border-bottom: 1px solid var(--border-color); text-align: left;">
+                    <th style="padding: 1rem;">追蹤號碼</th>
+                    <th style="padding: 1rem;">寄件人</th>
+                    <th style="padding: 1rem;">收件人</th>
+                    <th style="padding: 1rem;">狀態</th>
+                    <th style="padding: 1rem;">操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for pkg in packages %}
+                <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                    <td style="padding: 1rem; font-family: monospace;">{{ pkg.tracking_number }}</td>
+                    <td style="padding: 1rem;">{{ pkg.sender.full_name }}</td>
+                    <td style="padding: 1rem;">{{ pkg.recipient_name }}</td>
+                    <td style="padding: 1rem;">
+                        <span
+                            style="padding: 0.25rem 0.5rem; background: rgba(255,255,255,0.1); border-radius: 4px; font-size: 0.875rem;">
+                            {{ pkg.status_label }}
+                        </span>
+                    </td>
+                    <td style="padding: 1rem;">
+                        <a href="{{ url_for('main.tracking_result', tracking_number=pkg.tracking_number) }}"
+                            class="btn btn-outline" style="padding: 0.25rem 0.75rem; font-size: 0.875rem;">更新狀態</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

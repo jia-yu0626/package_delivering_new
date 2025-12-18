@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}首頁{% endblock %}
+
+{% block content %}
+<div class="container">
+    <section class="hero">
+        <h1>全球物流，盡在掌握</h1>
+        <p>輸入您的追蹤號碼，即時掌握包裹動態。安全、快速、可靠。</p>
+
+        <div class="card" style="max-width: 600px; margin: 0 auto;">
+            <form action="{{ url_for('main.track') }}" method="POST" style="display: flex; gap: 1rem;">
+                <input type="text" name="tracking_number" class="form-control" placeholder="輸入追蹤號碼 (例如: TW-12345678)"
+                    required style="flex: 1;">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-search"></i> 追蹤
+                </button>
+            </form>
+        </div>
+    </section>
+
+    <div
+        style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; margin-top: 4rem;">
+        <div class="card">
+            <i class="fas fa-bolt" style="font-size: 2rem; color: var(--primary-color); margin-bottom: 1rem;"></i>
+            <h3>極速配送</h3>
+            <p style="color: var(--text-muted);">提供隔夜達、兩日達等多種時效選擇，滿足您的緊急需求。</p>
+        </div>
+        <div class="card">
+            <i class="fas fa-globe" style="font-size: 2rem; color: var(--secondary-color); margin-bottom: 1rem;"></i>
+            <h3>全球覆蓋</h3>
+            <p style="color: var(--text-muted);">無論是國內還是國際，我們的物流網絡遍布全球。</p>
+        </div>
+        <div class="card">
+            <i class="fas fa-shield-alt" style="font-size: 2rem; color: var(--success-color); margin-bottom: 1rem;"></i>
+            <h3>安全保障</h3>
+            <p style="color: var(--text-muted);">全程實時監控，確保您的包裹安全送達目的地。</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

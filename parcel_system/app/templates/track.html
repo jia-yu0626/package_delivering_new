@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block title %}包裹追蹤{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="card" style="max-width: 600px; margin: 4rem auto;">
+        <h2 style="text-align: center; margin-bottom: 2rem;">包裹追蹤</h2>
+        <form action="{{ url_for('main.track') }}" method="POST">
+            <div class="form-group">
+                <label class="form-label">追蹤號碼</label>
+                <div style="display: flex; gap: 1rem;">
+                    <input type="text" name="tracking_number" class="form-control" placeholder="請輸入您的追蹤號碼" required>
+                    <button type="submit" class="btn btn-primary" style="white-space: nowrap;">
+                        <i class="fas fa-search"></i> 查詢
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

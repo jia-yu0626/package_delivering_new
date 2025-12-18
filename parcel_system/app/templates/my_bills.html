@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block title %}我的帳單{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2 style="margin-bottom: 2rem;">我的帳單 (My Bills)</h2>
+
+    <div class="card">
+        {% if bills %}
+        <table style="width: 100%; border-collapse: collapse; color: #fff;">
+            <thead>
+                <tr style="border-bottom: 1px solid var(--border-color); text-align: left;">
+                    <th style="padding: 1rem;">帳單編號</th>
+                    <th style="padding: 1rem;">包裹追蹤碼</th>
+                    <th style="padding: 1rem;">金額</th>
+                    <th style="padding: 1rem;">狀態</th>
+                    <th style="padding: 1rem;">建立日期</th>
+                    <th style="padding: 1rem;">操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for bill in bills %}
+                <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                    <td style="padding: 1rem;">#{{ bill.id }}</td>
+                    <td style="padding: 1rem; font-family: monospace;">
+                        <a href="{{ url_for('main.tracking_result', tracking_number=bill.package.tracking_number) }}"
+                            style="color: var(--primary-color);">
+                            {{ bill.package.tracking_number }}
+                        </a>
+                    </td>
+                    <td style="padding: 1rem;">NT$ {{ bill.amount }}</td>
+                    <td style="padding: 1rem;">
+                        {% if bill.is_paid %}
+                        <span style="color: #4cd964; font-weight: bold;">已付款</span>
+                        {% else %}
+                        <span style="color: #ff3b30; font-weight: bold;">未付款</span>
+                        {% endif %}
+                    </td>
+                    <td style="padding: 1rem;">{{ bill.created_at.strftime('%Y-%m-%d') }}</td>
+                    <td style="padding: 1rem;">
+                        {% if not bill.is_paid %}
+                        <form action="{{ url_for('main.pay_bill', bill_id=bill.id) }}" method="POST"
+                            style="display: flex; gap: 0.5rem; align-items: center;">
+                            <select name="method" class="form-control"
+                                style="padding: 0.25rem 0.5rem; font-size: 0.8rem; width: auto;">
+                                <option value="CREDIT_CARD">信用卡 (Credit Card)</option>
+                                <option value="MOBILE_PAYMENT">行動支付 (Mobile Payment)</option>
+                                <option value="balance" {% if balance < bill.amount %}disabled{% endif %}>
+                                    餘額付款 (餘額: NT${{ balance }})
+                                </option>
+                            </select>
+                            <button type="submit" class="btn btn-primary"
+                                style="padding: 0.25rem 0.75rem; font-size: 0.875rem;">
+                                付款
+                            </button>
+                        </form>
+                        {% else %}
+                        <span style="color: var(--text-muted); font-size: 0.875rem;">{{
+                            bill.paid_at.strftime('%Y-%m-%d') if bill.paid_at else '' }}</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div style="text-align: center; padding: 2rem;">
+            <p style="color: var(--text-muted);">目前沒有帳單。</p>
+            <a href="{{ url_for('main.create_package') }}" class="btn btn-primary">寄送包裹</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
