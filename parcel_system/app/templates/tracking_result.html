@@ -24,7 +24,7 @@
                     style="font-size: 0.875rem; padding: 0.5rem 1rem;">
                     <i class="fas fa-search"></i> 查詢其他
                 </a>
-                {% if session.get('user_role') in ['driver', 'warehouse', 'admin'] %}
+                {% if session.get('user_role') in ['driver', 'warehouse', 'admin', 'customer_service'] %}
                 <a href="{{ url_for('main.edit_package', tracking_number=package.tracking_number) }}"
                     class="btn btn-primary" style="font-size: 0.875rem; padding: 0.5rem 1rem;">
                     <i class="fas fa-edit"></i> 編輯屬性
@@ -66,7 +66,7 @@
         </div>
     </div>
 
-    {% if session.get('user_role') in ['driver', 'warehouse', 'admin'] %}
+    {% if session.get('user_role') in ['driver', 'warehouse', 'admin', 'customer_service'] %}
     <div class="card">
         <h3>更新包裹狀態 / 回報異常 (員工專用)</h3>
         <form action="{{ url_for('main.update_status', tracking_number=package.tracking_number) }}" method="POST">
