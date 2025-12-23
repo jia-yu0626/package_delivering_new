@@ -29,7 +29,12 @@ body {
 }
 
 /* Typography */
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
     font-weight: 700;
     margin-bottom: 1rem;
     color: #fff;
@@ -167,6 +172,15 @@ a:hover {
     font-family: inherit;
     font-size: 1rem;
 }
+
+/* 手動新增這段來修正下拉選單全白的問題 */
+.form-control option {
+    background-color: #1a1f2b;
+    /* 使用與你背景相近的深色 */
+    color: #ffffff;
+    /* 確保文字是白色的 */
+}
+
 
 .form-control:focus {
     outline: none;
