@@ -3,20 +3,23 @@ from app.models import UserRole
 
 app = create_app()
 
-def create_user_if_not_exists(username, password, full_name, email, phone, role, department=None):
+def create_user_if_not_exists(username, password, full_name, email, phone, role, department=None, customer_type=None):
     user = db.session.query(models.User).filter_by(username=username).first()
     if user:
         print(f"User {username} already exists.")
     else:
         print(f"Creating user {username}...")
         if role == UserRole.CUSTOMER:
-            new_user = models.Customer(
-                username=username,
-                full_name=full_name,
-                email=email,
-                phone=phone,
-                role=role
-            )
+            user_kwargs = {
+                'username': username,
+                'full_name': full_name,
+                'email': email,
+                'phone': phone,
+                'role': role
+            }
+            if customer_type:
+                user_kwargs['customer_type'] = customer_type
+            new_user = models.Customer(**user_kwargs)
         else:
             new_user = models.Employee(
                 username=username,
@@ -74,14 +77,26 @@ with app.app_context():
         department='Support'
     )
 
-    # Test Customer
+    # General Customer (Non-Contract)
     create_user_if_not_exists(
         username='customer',
         password='customer123',
-        full_name='測試客戶',
+        full_name='一般客戶',
         email='customer@system.com',
         phone='0900000004',
-        role=UserRole.CUSTOMER
+        role=UserRole.CUSTOMER,
+        customer_type=models.CustomerType.NON_CONTRACT
+    )
+
+    # Contract Customer
+    create_user_if_not_exists(
+        username='contract_user',
+        password='contract123',
+        full_name='合約客戶',
+        email='contract@system.com',
+        phone='0900000005',
+        role=UserRole.CUSTOMER,
+        customer_type=models.CustomerType.CONTRACT
     )
 
     db.session.commit()

@@ -233,3 +233,64 @@ class Bill(Base):
 
 # Update Customer to include bills relationship
 # Customer.bills = relationship("Bill", back_populates="customer")
+
+class WarehouseStaff(Employee):
+    __tablename__ = 'warehouse_staff'
+    
+    id: Mapped[int] = mapped_column(ForeignKey('employees.id'), primary_key=True)
+    warehouse_location_id: Mapped[str] = mapped_column(String(50), nullable=True) # warehouseLocationID
+    
+    __mapper_args__ = {
+        'polymorphic_identity': 'warehouse_staff',
+    }
+    
+    def create_package(self, properties):
+        """
+        createPackage(properties): Create a package.
+        properties: dict containing sender_id, recipient info, package info.
+        """
+        from . import services
+        # Assuming properties dict matches services.create_package arguments structure
+        # We need sender_id, recipient_data, package_data
+        
+        sender_id = properties.get('sender_id')
+        recipient_data = {
+            'name': properties.get('recipient_name'),
+            'address': properties.get('recipient_address'),
+            'phone': properties.get('recipient_phone')
+        }
+        package_data = {
+            'weight': properties.get('weight'),
+            'width': properties.get('width'),
+            'height': properties.get('height'),
+            'length': properties.get('length'),
+            'package_type': properties.get('package_type', 'SMALL_BOX'),
+            'delivery_speed': properties.get('delivery_speed', 'STANDARD'),
+            'declared_value': properties.get('declared_value', 0),
+            'content_description': properties.get('content_description', ''),
+            'is_hazardous': properties.get('is_hazardous', False),
+            'is_fragile': properties.get('is_fragile', False),
+            'is_international': properties.get('is_international', False)
+        }
+        payment_method = properties.get('payment_method', PaymentMethod.CASH)
+        
+        return services.create_package(sender_id, recipient_data, package_data, payment_method)
+
+    def record_tracking_event(self, tracking_number, status, description):
+        """
+        recordTrackingEvent(): Record a tracking event.
+        """
+        from . import services
+        # Uses own warehouse_location_id as location default if available, else generic
+        location = self.warehouse_location_id or f"Warehouse Staff {self.id}"
+        return services.add_tracking_event(tracking_number, status, location, description, user_id=self.id)
+
+    def handle_package_anomaly(self, tracking_number, description):
+        """
+        handlePackageAnomaly(): Handle package anomaly (e.g., damage).
+        """
+        from . import services
+        location = self.warehouse_location_id or f"Warehouse Staff {self.id}"
+        # Records as DAMAGED or uses description to determine
+        return services.add_tracking_event(tracking_number, PackageStatus.DAMAGED.name, location, f"Anomaly: {description}", user_id=self.id)
+
