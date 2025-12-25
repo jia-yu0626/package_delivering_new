@@ -32,5 +32,5 @@
 - [x] 實作核心服務邏輯 (`app/services.py`)
 - [x] 建立 Web 應用程式入口 (`run.py`, `app/__init__.py`)
 - [x] 設計前端樣式 (`app/static/css/style.css`) - **需符合現代美學**
-- [ ] 實作主要頁面 (首頁, 追蹤頁, 登入頁, 後台管理)
+- [x] 實作主要頁面 (首頁, 追蹤頁, 登入頁, 後台管理)
 - [ ] 撰寫測試案例 (`tests/test_core.py`)
