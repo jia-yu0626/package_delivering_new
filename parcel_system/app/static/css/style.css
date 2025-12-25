@@ -163,6 +163,7 @@ a:hover {
 }
 
 .form-control {
+
     width: 100%;
     padding: 0.75rem 1rem;
     background: rgba(255, 255, 255, 0.05);
@@ -171,6 +172,8 @@ a:hover {
     color: #fff;
     font-family: inherit;
     font-size: 1rem;
+    /* 關鍵修正：確保 width 包含 padding 和 border，不會往外撐開 */
+    box-sizing: border-box;
 }
 
 /* 手動新增這段來修正下拉選單全白的問題 */
