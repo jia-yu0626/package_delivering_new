@@ -28,7 +28,7 @@
 
 ## 3. 待辦事項 (Task List)
 - [ ] 初始化專案結構與環境設定 (`requirements.txt`)
-- [ ] 實作資料庫模型 (`app/models.py`) - **優先**
+- [x] 實作資料庫模型 (`app/models.py`) - **優先**
 - [ ] 實作核心服務邏輯 (`app/services.py`)
 - [ ] 建立 Web 應用程式入口 (`run.py`, `app/__init__.py`)
 - [ ] 設計前端樣式 (`app/static/css/style.css`) - **需符合現代美學**
