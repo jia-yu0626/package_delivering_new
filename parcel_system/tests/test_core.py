@@ -11,6 +11,15 @@ def app():
     
     with app.app_context():
         db.create_all()
+        
+        # Seed Pricing Rules for tests
+        r1 = models.PricingRule(service_type=models.DeliverySpeed.STANDARD, base_rate=60.0, rate_per_kg=10.0)
+        r2 = models.PricingRule(service_type=models.DeliverySpeed.OVERNIGHT, base_rate=150.0, rate_per_kg=20.0)
+        r3 = models.PricingRule(service_type=models.DeliverySpeed.TWO_DAY, base_rate=100.0, rate_per_kg=15.0)
+        r4 = models.PricingRule(service_type=models.DeliverySpeed.ECONOMY, base_rate=40.0, rate_per_kg=5.0)
+        db.session.add_all([r1, r2, r3, r4])
+        db.session.commit()
+        
         yield app
         db.session.remove()
         db.drop_all()
