@@ -6,53 +6,61 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import enum
 from .extensions import Base
 
-# --- Enums (列舉) ---
+# --- Enums (列舉：定義固定選項，確保資料一致性) ---
+
 class UserRole(enum.Enum):
-    CUSTOMER = "customer"
-    DRIVER = "driver"
-    WAREHOUSE = "warehouse"
-    ADMIN = "admin"
-    CS = "customer_service" # 客服
+    """使用者角色類型"""
+    CUSTOMER = "customer"        # 客戶
+    DRIVER = "driver"            # 司機
+    WAREHOUSE = "warehouse"      # 倉儲人員
+    ADMIN = "admin"              # 管理員
+    CS = "customer_service"      # 客服人員
 
 class CustomerType(enum.Enum):
-    CONTRACT = "contract" # 合約
-    NON_CONTRACT = "non_contract" # 非合約
-    PREPAID = "prepaid" # 預付
+    """客戶分類"""
+    CONTRACT = "contract"        # 合約客戶 (通常是公司長期配合)
+    NON_CONTRACT = "non_contract" # 一般散客
+    PREPAID = "prepaid"          # 預付型客戶
 
 class PackageType(enum.Enum):
-    ENVELOPE = "envelope" # 平郵信封
-    SMALL_BOX = "small_box" # 小型箱
-    MEDIUM_BOX = "medium_box" # 中型箱
-    LARGE_BOX = "large_box" # 大型箱
+    """包裹包裝類型"""
+    ENVELOPE = "envelope"        # 信封/平郵
+    SMALL_BOX = "small_box"      # 小型箱
+    MEDIUM_BOX = "medium_box"    # 中型箱
+    LARGE_BOX = "large_box"      # 大型箱
 
 class DeliverySpeed(enum.Enum):
-    OVERNIGHT = "overnight" # 隔夜達
-    TWO_DAY = "two_day" # 兩日達
-    STANDARD = "standard" # 標準速遞
-    ECONOMY = "economy" # 經濟速遞
+    """運送時效等級"""
+    OVERNIGHT = "overnight"      # 隔夜達 (最快)
+    TWO_DAY = "two_day"          # 兩日達
+    STANDARD = "standard"        # 標準速遞
+    ECONOMY = "economy"          # 經濟速遞 (最慢/便宜)
 
 class PackageStatus(enum.Enum):
-    CREATED = "created" # 已建立
-    PICKED_UP = "picked_up" # 已取件
-    IN_TRANSIT = "in_transit" # 運送中 (進出貨車/倉儲)
-    SORTING = "sorting" # 分揀中
-    OUT_FOR_DELIVERY = "out_for_delivery" # 派送中
-    DELIVERED = "delivered" # 已送達
-    EXCEPTION = "exception" # 異常 (General)
-    LOST = "lost" # 遺失
-    DELAYED = "delayed" # 延誤
-    DAMAGED = "damaged" # 損毀
+    """包裹目前的物流狀態"""
+    CREATED = "created"           # 已建立運單
+    PICKED_UP = "picked_up"       # 司機已取件
+    IN_TRANSIT = "in_transit"     # 運輸中 (幹線運輸)
+    SORTING = "sorting"           # 分揀中心處理中
+    OUT_FOR_DELIVERY = "out_for_delivery" # 末端派送中
+    DELIVERED = "delivered"       # 已成功送達
+    EXCEPTION = "exception"       # 物流異常
+    LOST = "lost"                 # 遺失
+    DELAYED = "delayed"           # 延誤
+    DAMAGED = "damaged"           # 損毀
 
 class PaymentMethod(enum.Enum):
-    MONTHLY = "monthly" # 月結
-    CASH = "cash" # 現金
-    CREDIT_CARD = "credit_card" # 信用卡
-    MOBILE_PAYMENT = "mobile_payment" # 行動支付
-    PREPAID = "prepaid" # 預付
+    """支付方式"""
+    MONTHLY = "monthly"          # 月結 (合約戶常用)
+    CASH = "cash"                # 現金
+    CREDIT_CARD = "credit_card"  # 信用卡
+    MOBILE_PAYMENT = "mobile_payment" # 行動支付 (LinePay, ApplePay等)
+    PREPAID = "prepaid"          # 預付扣款
 
-# --- Models (類別) ---
+# --- Models (類別：對應資料庫表格) ---
 
 class User(Base):
+    """使用者基礎類別 (採用 Joined Table Inheritance 多型設計)"""
     __tablename__ = 'users'
     
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -64,7 +72,7 @@ class User(Base):
     address: Mapped[str] = mapped_column(String(200), nullable=True)
     role: Mapped[UserRole] = mapped_column(Enum(UserRole), default=UserRole.CUSTOMER)
     
-    # Polymorphic identity configuration
+    # 用於區分子類別（Customer/Employee）的欄位
     type: Mapped[str] = mapped_column(String(50))
     
     __mapper_args__ = {
@@ -73,19 +81,23 @@ class User(Base):
     }
 
     def set_password(self, password):
+        """密碼加密存儲"""
         self.password_hash = generate_password_hash(password)
 
     def check_password(self, password):
+        """驗證密碼是否正確"""
         return check_password_hash(self.password_hash, password)
 
 class Customer(User):
+    """客戶詳細資料 (繼承自 User)"""
     __tablename__ = 'customers'
     
     id: Mapped[int] = mapped_column(ForeignKey('users.id'), primary_key=True)
     customer_type: Mapped[CustomerType] = mapped_column(Enum(CustomerType), default=CustomerType.NON_CONTRACT)
     billing_preference: Mapped[PaymentMethod] = mapped_column(Enum(PaymentMethod), default=PaymentMethod.CASH)
-    balance: Mapped[float] = mapped_column(Float, default=0.0) # For Prepaid customers
+    balance: Mapped[float] = mapped_column(Float, default=0.0) # 僅適用於預付型客戶
     
+    # 關聯設定：一個客戶可以擁有多個包裹與帳單
     packages: Mapped[List["Package"]] = relationship("Package", back_populates="sender")
     bills: Mapped[List["Bill"]] = relationship("Bill", back_populates="customer")
 
@@ -95,6 +107,7 @@ class Customer(User):
 
     @property
     def type_label(self):
+        """回傳客戶類型的中文顯示名稱"""
         labels = {
             CustomerType.CONTRACT: "合約客戶",
             CustomerType.NON_CONTRACT: "非合約客戶",
@@ -103,6 +116,7 @@ class Customer(User):
         return labels.get(self.customer_type, "一般客戶")
 
 class Employee(User):
+    """員工基礎資料 (繼承自 User)"""
     __tablename__ = 'employees'
     id: Mapped[int] = mapped_column(ForeignKey('users.id'), primary_key=True)
     department: Mapped[str] = mapped_column(String(50), nullable=True)
@@ -112,46 +126,52 @@ class Employee(User):
     }
 
 class Package(Base):
+    """包裹主資料表格"""
     __tablename__ = 'packages'
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    tracking_number: Mapped[str] = mapped_column(String(20), unique=True, nullable=False)
+    tracking_number: Mapped[str] = mapped_column(String(20), unique=True, nullable=False) # 物流單號
     sender_id: Mapped[int] = mapped_column(ForeignKey('customers.id'), nullable=False)
+    
+    # 收件人資訊
     recipient_name: Mapped[str] = mapped_column(String(100), nullable=False)
     recipient_address: Mapped[str] = mapped_column(String(200), nullable=False)
     recipient_phone: Mapped[str] = mapped_column(String(20), nullable=False)
     
-    weight: Mapped[float] = mapped_column(Float, nullable=False) # kg
-    width: Mapped[float] = mapped_column(Float, nullable=False) # cm
-    height: Mapped[float] = mapped_column(Float, nullable=False) # cm
-    length: Mapped[float] = mapped_column(Float, nullable=False) # cm
-    declared_value: Mapped[float] = mapped_column(Float, default=0.0)
-    content_description: Mapped[str] = mapped_column(String(255), nullable=True)
+    # 規格資訊
+    weight: Mapped[float] = mapped_column(Float, nullable=False) # 重量 (kg)
+    width: Mapped[float] = mapped_column(Float, nullable=False)  # 寬 (cm)
+    height: Mapped[float] = mapped_column(Float, nullable=False) # 高 (cm)
+    length: Mapped[float] = mapped_column(Float, nullable=False) # 長 (cm)
+    declared_value: Mapped[float] = mapped_column(Float, default=0.0) # 報值金額 (保險用)
+    content_description: Mapped[str] = mapped_column(String(255), nullable=True) # 內容物描述
     
+    # 服務選項
     package_type: Mapped[PackageType] = mapped_column(Enum(PackageType), default=PackageType.SMALL_BOX)
     delivery_speed: Mapped[DeliverySpeed] = mapped_column(Enum(DeliverySpeed), default=DeliverySpeed.STANDARD)
     status: Mapped[PackageStatus] = mapped_column(Enum(PackageStatus), default=PackageStatus.CREATED)
     
-    # Special Handling Flags
-    is_hazardous: Mapped[bool] = mapped_column(Boolean, default=False)
-    is_fragile: Mapped[bool] = mapped_column(Boolean, default=False)
-    is_international: Mapped[bool] = mapped_column(Boolean, default=False)
+    # 特殊處理旗標
+    is_hazardous: Mapped[bool] = mapped_column(Boolean, default=False)   # 易燃物/危險品
+    is_fragile: Mapped[bool] = mapped_column(Boolean, default=False)     # 易碎品
+    is_international: Mapped[bool] = mapped_column(Boolean, default=False) # 國際件
     
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
-    estimated_delivery: Mapped[datetime] = mapped_column(DateTime, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now) # 寄件時間
+    estimated_delivery: Mapped[datetime] = mapped_column(DateTime, nullable=True) # 預計抵達時間
     
-    # Pricing
-    shipping_cost: Mapped[float] = mapped_column(Float, default=0.0)
+    shipping_cost: Mapped[float] = mapped_column(Float, default=0.0) # 運費金額
     
+    # 關聯設定
     sender: Mapped["Customer"] = relationship("Customer", back_populates="packages", foreign_keys=[sender_id])
     tracking_events: Mapped[List["TrackingEvent"]] = relationship("TrackingEvent", back_populates="package", cascade="all, delete-orphan")
     
-    # Driver Assignment
+    # 負責派送的司機
     assigned_driver_id: Mapped[Optional[int]] = mapped_column(ForeignKey('users.id'), nullable=True)
     assigned_driver: Mapped[Optional["User"]] = relationship("User", foreign_keys=[assigned_driver_id])
 
     @property
     def status_label(self):
+        """獲取物流狀態的中文顯示名稱"""
         labels = {
             PackageStatus.CREATED: "已建立",
             PackageStatus.PICKED_UP: "已取件",
@@ -166,79 +186,54 @@ class Package(Base):
         }
         return labels.get(self.status, self.status.value)
 
-    @property
-    def delivery_speed_label(self):
-        labels = {
-            DeliverySpeed.OVERNIGHT: "隔夜達",
-            DeliverySpeed.TWO_DAY: "兩日達",
-            DeliverySpeed.STANDARD: "標準速遞",
-            DeliverySpeed.ECONOMY: "經濟速遞"
-        }
-        return labels.get(self.delivery_speed, self.delivery_speed.value)
-
 class TrackingEvent(Base):
+    """物流軌跡事件 (每當包裹被掃描一次就會新增一筆)"""
     __tablename__ = 'tracking_events'
 
     id: Mapped[int] = mapped_column(primary_key=True)
     package_id: Mapped[int] = mapped_column(ForeignKey('packages.id'), nullable=False)
-    timestamp: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
-    location: Mapped[str] = mapped_column(String(100), nullable=False)
-    status: Mapped[PackageStatus] = mapped_column(Enum(PackageStatus), nullable=False)
-    description: Mapped[str] = mapped_column(String(255), nullable=False)
+    timestamp: Mapped[datetime] = mapped_column(DateTime, default=datetime.now) # 掃描時間
+    location: Mapped[str] = mapped_column(String(100), nullable=False) # 掃描地點 (例如：台北分揀中心)
+    status: Mapped[PackageStatus] = mapped_column(Enum(PackageStatus), nullable=False) # 當時狀態
+    description: Mapped[str] = mapped_column(String(255), nullable=False) # 詳細描述 (例如：包裹已抵達...)
     
-    # Optional: Link to the employee who scanned it
+    # 選擇性：記錄是由哪位員工操作掃描的
     handled_by_id: Mapped[Optional[int]] = mapped_column(ForeignKey('users.id'), nullable=True)
     
     package: Mapped["Package"] = relationship("Package", back_populates="tracking_events")
 
-    @property
-    def status_label(self):
-        labels = {
-            PackageStatus.CREATED: "已建立",
-            PackageStatus.PICKED_UP: "已取件",
-            PackageStatus.IN_TRANSIT: "運送中",
-            PackageStatus.SORTING: "分揀中",
-            PackageStatus.OUT_FOR_DELIVERY: "派送中",
-            PackageStatus.DELIVERED: "已送達",
-            PackageStatus.EXCEPTION: "異常狀況",
-            PackageStatus.LOST: "遺失包裹",
-            PackageStatus.DELAYED: "配送延誤",
-            PackageStatus.DAMAGED: "包裹損毀"
-        }
-        return labels.get(self.status, self.status.value)
-
 class PricingRule(Base):
+    """運費計算規則表"""
     __tablename__ = 'pricing_rules'
     
     id: Mapped[int] = mapped_column(primary_key=True)
-    service_type: Mapped[DeliverySpeed] = mapped_column(Enum(DeliverySpeed), unique=True)
-    base_rate: Mapped[float] = mapped_column(Float, nullable=False)
-    rate_per_kg: Mapped[float] = mapped_column(Float, nullable=False)
-    rate_per_km: Mapped[float] = mapped_column(Float, default=0.5) # Simplified distance metric
+    service_type: Mapped[DeliverySpeed] = mapped_column(Enum(DeliverySpeed), unique=True) # 服務等級
+    base_rate: Mapped[float] = mapped_column(Float, nullable=False)   # 起步價 (基本費用)
+    rate_per_kg: Mapped[float] = mapped_column(Float, nullable=False) # 每公斤加收金額
+    rate_per_km: Mapped[float] = mapped_column(Float, default=0.5)    # 每公里加收金額 (簡易里程計算用)
 
 class Bill(Base):
+    """帳單/發票資訊"""
     __tablename__ = 'bills'
     
     id: Mapped[int] = mapped_column(primary_key=True)
     customer_id: Mapped[int] = mapped_column(ForeignKey('customers.id'), nullable=False)
-    package_id: Mapped[int] = mapped_column(ForeignKey('packages.id'), nullable=False, unique=True)
-    amount: Mapped[float] = mapped_column(Float, nullable=False)
-    is_paid: Mapped[bool] = mapped_column(Boolean, default=False)
+    package_id: Mapped[int] = mapped_column(ForeignKey('packages.id'), nullable=False, unique=True) # 每個包裹對應一個帳單
+    amount: Mapped[float] = mapped_column(Float, nullable=False) # 總計金額
+    is_paid: Mapped[bool] = mapped_column(Boolean, default=False) # 是否已付款
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
-    paid_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    paid_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True) # 付款日期
     
     customer: Mapped["Customer"] = relationship("Customer", back_populates="bills")
     package: Mapped["Package"] = relationship("Package", backref=backref("bill", uselist=False))
     payment_method: Mapped[Optional[PaymentMethod]] = mapped_column(Enum(PaymentMethod), nullable=True)
 
-# Update Customer to include bills relationship
-# Customer.bills = relationship("Bill", back_populates="customer")
-
 class WarehouseStaff(Employee):
+    """倉儲人員類別 (繼承自 Employee，具備操作包裹的方法)"""
     __tablename__ = 'warehouse_staff'
     
     id: Mapped[int] = mapped_column(ForeignKey('employees.id'), primary_key=True)
-    warehouse_location_id: Mapped[str] = mapped_column(String(50), nullable=True) # warehouseLocationID
+    warehouse_location_id: Mapped[str] = mapped_column(String(50), nullable=True) # 隸屬的倉庫編號
     
     __mapper_args__ = {
         'polymorphic_identity': 'warehouse_staff',
@@ -246,12 +241,10 @@ class WarehouseStaff(Employee):
     
     def create_package(self, properties):
         """
-        createPackage(properties): Create a package.
-        properties: dict containing sender_id, recipient info, package info.
+        建立新包裹的邏輯處理
+        :param properties: 包含寄件人、收件人與包裹規格的字典
         """
-        from . import services
-        # Assuming properties dict matches services.create_package arguments structure
-        # We need sender_id, recipient_data, package_data
+        from . import services # 延遲匯入避免循環引用
         
         sender_id = properties.get('sender_id')
         recipient_data = {
@@ -274,23 +267,23 @@ class WarehouseStaff(Employee):
         }
         payment_method = properties.get('payment_method', PaymentMethod.CASH)
         
+        # 呼叫後端服務層邏輯來建立包裹
         return services.create_package(sender_id, recipient_data, package_data, payment_method)
 
     def record_tracking_event(self, tracking_number, status, description):
         """
-        recordTrackingEvent(): Record a tracking event.
+        記錄一筆新的掃描軌跡
         """
         from . import services
-        # Uses own warehouse_location_id as location default if available, else generic
+        # 若無明確地點，則使用倉庫人員所屬的倉庫編號
         location = self.warehouse_location_id or f"Warehouse Staff {self.id}"
         return services.add_tracking_event(tracking_number, status, location, description, user_id=self.id)
 
     def handle_package_anomaly(self, tracking_number, description):
         """
-        handlePackageAnomaly(): Handle package anomaly (e.g., damage).
+        處理包裹異常狀況 (例如發現外箱毀損)
         """
         from . import services
         location = self.warehouse_location_id or f"Warehouse Staff {self.id}"
-        # Records as DAMAGED or uses description to determine
+        # 將狀態設為 DAMAGED 並記錄描述
         return services.add_tracking_event(tracking_number, PackageStatus.DAMAGED.name, location, f"Anomaly: {description}", user_id=self.id)
-
