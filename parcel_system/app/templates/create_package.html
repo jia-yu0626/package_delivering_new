@@ -8,10 +8,8 @@
         <h2 style="margin-bottom: 2rem; text-align: center;">建立新包裹</h2>
 
         <form method="POST">
-            <h4
-                style="color: var(--primary-color); margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
-                收件人資訊</h4>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <h4 class="section-title">收件人資訊</h4>
+            <div class="form-grid">
                 <div class="form-group">
                     <label class="form-label">姓名</label>
                     <input type="text" name="recipient_name" class="form-control" required>
@@ -26,10 +24,8 @@
                 <input type="text" name="recipient_address" class="form-control" required>
             </div>
 
-            <h4
-                style="color: var(--primary-color); margin: 2rem 0 1rem 0; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
-                包裹詳情</h4>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <h4 class="section-title">包裹詳情</h4>
+            <div class="form-grid">
                 <div class="form-group">
                     <label class="form-label">重量 (kg)</label>
                     <input type="number" step="0.1" min="0.1" name="weight" class="form-control" required>
@@ -40,7 +36,7 @@
                 </div>
             </div>
 
-            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;">
+            <div class="form-grid form-grid-3">
                 <div class="form-group">
                     <label class="form-label">長 (cm)</label>
                     <input type="number" step="1" min="1" name="length" class="form-control" required>
@@ -55,10 +51,8 @@
                 </div>
             </div>
 
-            <h4
-                style="color: var(--primary-color); margin: 2rem 0 1rem 0; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
-                服務選項</h4>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <h4 class="section-title">服務選項</h4>
+            <div class="form-grid">
                 <div class="form-group">
                     <label class="form-label">包裹類型</label>
                     <select name="package_type" class="form-control">
@@ -94,9 +88,7 @@
                 </label>
             </div>
 
-            <h4
-                style="color: var(--primary-color); margin: 2rem 0 1rem 0; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
-                付款方式 (Payment)</h4>
+            <h4 class="section-title">付款方式 (Payment)</h4>
 
             {% if user.customer_type.name == 'CONTRACT' %}
             <div style="background-color: #e3f2fd; padding: 1rem; border-radius: 4px; color: #0d47a1;">
