@@ -282,8 +282,32 @@ def update_status(tracking_number):
         flash('司機只能更新狀態為「已送達」或異常狀態', 'error')
         return redirect(url_for('main.tracking_result', tracking_number=tracking_number))
     
+    # 倉庫人員：正常狀態只能更新到 PICKED_UP、IN_TRANSIT、SORTING 且只能往前進；異常狀態隨時可選
+    exception_statuses = ['EXCEPTION', 'LOST', 'DELAYED', 'DAMAGED']
+    warehouse_allowed_statuses = ['PICKED_UP', 'IN_TRANSIT', 'SORTING']
+    if session.get('user_role') == 'warehouse':
+        # 如果不是異常狀態，則檢查正常狀態的限制
+        if status not in exception_statuses:
+            if status not in warehouse_allowed_statuses:
+                flash('倉庫人員只能更新狀態為「已收件」、「運輸中」、「分揀中」或異常狀態', 'error')
+                return redirect(url_for('main.tracking_result', tracking_number=tracking_number))
+            
+            # 驗證只能往前進不能往回
+            status_order = {'CREATED': 0, 'PICKED_UP': 1, 'IN_TRANSIT': 2, 'SORTING': 3}
+            package = services.get_package_by_tracking(tracking_number)
+            current_order = status_order.get(package.status.name, 0)
+            new_order = status_order.get(status, 0)
+            
+            if new_order <= current_order:
+                flash('不能將狀態往回更改，只能選擇當前狀態之後的進度', 'error')
+                return redirect(url_for('main.tracking_result', tracking_number=tracking_number))
+    
     services.add_tracking_event(tracking_number, status, location, description, session['user_id'])
     flash('狀態更新成功', 'success')
+    
+    # 司機和倉庫人員跳轉到儀表板清單頁面
+    if session.get('user_role') in ['driver', 'warehouse']:
+        return redirect(url_for('main.dashboard'))
     return redirect(url_for('main.tracking_result', tracking_number=tracking_number))
 
 @main.route('/admin/auto_assign', methods=['POST'])
@@ -293,7 +317,10 @@ def auto_assign():
          return "Unauthorized", 403
          
     count = services.auto_assign_packages()
-    flash(f'已自動分配 {count} 個包裹給司機 (Assigned {count} packages)', 'success')
+    if count == 0:
+        flash('配送失敗，只能配送分揀中的包裹', 'error')
+    else:
+        flash(f'已自動分配 {count} 個包裹給司機 (Assigned {count} packages)', 'success')
     return redirect(url_for('main.dashboard'))
 
 @main.route('/edit_package/<tracking_number>', methods=['GET', 'POST'])

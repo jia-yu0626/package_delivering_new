@@ -93,7 +93,7 @@
             {% if user.customer_type.name == 'CONTRACT' %}
             <div style="background-color: #e3f2fd; padding: 1rem; border-radius: 4px; color: #0d47a1;">
                 <strong>合約客戶 (Contract)</strong>: 費用將計入月結單 (Monthly Settlement)。<br>
-                <strong>餘額帳號 (Balance Account)</strong>: {{ user.id|string|zfill(8) }}
+                <strong>餘額帳號 (Balance Account)</strong>: {{ '%08d' | format(user.id) }}
             </div>
             {% elif user.customer_type.name == 'PREPAID' %}
             <div style="background-color: #e8f5e9; padding: 1rem; border-radius: 4px; color: #1b5e20;">
