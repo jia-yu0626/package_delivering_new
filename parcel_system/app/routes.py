@@ -122,9 +122,15 @@ def dashboard():
         # Admin only sees pricing management
         return render_template('dashboard_admin.html')
     elif role == 'warehouse':
-        # Warehouse sees recent packages
+        # Warehouse sees packages that are not out for delivery or delivered
         recent_packages = db.session.execute(
-            db.select(models.Package).order_by(models.Package.created_at.desc()).limit(20)
+            db.select(models.Package)
+            .filter(models.Package.status.notin_([
+                models.PackageStatus.OUT_FOR_DELIVERY,
+                models.PackageStatus.DELIVERED
+            ]))
+            .order_by(models.Package.created_at.desc())
+            .limit(20)
         ).scalars().all()
         return render_template('dashboard_employee.html', packages=recent_packages)
     
@@ -294,7 +300,7 @@ def update_status(tracking_number):
         
     status = request.form.get('status')
     location = request.form.get('location')
-    description = request.form.get('description')
+    description = request.form.get('description') or '狀態更新'  # 預設描述
     
     # 司機只能更新為「已送達」或異常狀態
     driver_allowed_statuses = ['DELIVERED', 'EXCEPTION', 'LOST', 'DELAYED', 'DAMAGED']

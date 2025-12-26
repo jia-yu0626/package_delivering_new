@@ -296,9 +296,17 @@ def auto_assign_packages():
         # --- 狀態改動邏輯 ---
         if package.status == models.PackageStatus.SORTING:
             package.status = models.PackageStatus.OUT_FOR_DELIVERY
+            
+            # 新增 TrackingEvent 記錄
+            event = models.TrackingEvent(
+                package=package,
+                status=models.PackageStatus.OUT_FOR_DELIVERY,
+                location="系統自動分配",
+                description=f"包裹已分配給司機 {driver.full_name} 進行派送"
+            )
+            db.session.add(event)
+            
         assigned_count += 1
-        
-        # Optional: Add system note?
         
     db.session.commit()
     return assigned_count

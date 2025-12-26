@@ -1,28 +1,31 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>極速快遞 (SpeedParcel) - {% block title %}首頁{% endblock %}</title>
+    <title>猴子包裹 (MonkeyParcel) - {% block title %}首頁{% endblock %}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=Inter:wght@300;400;600&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
+
 <body>
     <nav class="navbar">
         <div class="container nav-container">
             <a href="{{ url_for('main.index') }}" class="logo">
-                <i class="fas fa-cube"></i> 極速快遞
+                <i class="fas fa-cube"></i> 猴子包裹
             </a>
             <div class="nav-links">
-                <a href="{{ url_for('main.track') }}">包裹追蹤</a>
                 {% if session.get('user_id') %}
-                    <a href="{{ url_for('main.dashboard') }}">我的帳戶</a>
-                    <a href="{{ url_for('main.logout') }}" class="btn btn-outline">登出</a>
+                <a href="{{ url_for('main.dashboard') }}">我的帳戶</a>
+                <a href="{{ url_for('main.logout') }}" class="btn btn-outline">登出</a>
                 {% else %}
-                    <a href="{{ url_for('main.login') }}" class="btn btn-primary">登入 / 註冊</a>
+                <a href="{{ url_for('main.login') }}" class="btn btn-primary">登入 / 註冊</a>
                 {% endif %}
             </div>
         </div>
@@ -30,13 +33,13 @@
 
     <main class="main-content">
         {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                <div class="flash-messages container">
-                    {% for category, message in messages %}
-                        <div class="alert alert-{{ category }}">{{ message }}</div>
-                    {% endfor %}
-                </div>
-            {% endif %}
+        {% if messages %}
+        <div class="flash-messages container">
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
         {% endwith %}
 
         {% block content %}{% endblock %}
@@ -44,8 +47,9 @@
 
     <footer class="footer">
         <div class="container">
-            <p>&copy; 2025 極速快遞 (SpeedParcel). All rights reserved.</p>
+            <p>&copy; 2025 猴子包裹 (MonkeyParcel). All rights reserved.</p>
         </div>
     </footer>
 </body>
+
 </html>

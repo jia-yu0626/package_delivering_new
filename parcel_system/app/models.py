@@ -57,6 +57,20 @@ class PaymentMethod(enum.Enum):
     MOBILE_PAYMENT = "mobile_payment" # 行動支付 (LinePay, ApplePay等)
     PREPAID = "prepaid"          # 預付扣款
 
+# --- 共用的狀態標籤字典 (讓 Package 和 TrackingEvent 同步) ---
+PACKAGE_STATUS_LABELS = {
+    PackageStatus.CREATED: "已建立",
+    PackageStatus.PICKED_UP: "起運地收件",
+    PackageStatus.IN_TRANSIT: "運輸至物流中心",
+    PackageStatus.SORTING: "分揀中",
+    PackageStatus.OUT_FOR_DELIVERY: "派送中",
+    PackageStatus.DELIVERED: "已送達",
+    PackageStatus.EXCEPTION: "異常狀況",
+    PackageStatus.LOST: "遺失包裹",
+    PackageStatus.DELAYED: "配送延誤",
+    PackageStatus.DAMAGED: "包裹損毀"
+}
+
 # --- Models (類別：對應資料庫表格) ---
 
 class User(Base):
@@ -172,19 +186,7 @@ class Package(Base):
     @property
     def status_label(self):
         """獲取物流狀態的中文顯示名稱"""
-        labels = {
-            PackageStatus.CREATED: "已建立",
-            PackageStatus.PICKED_UP: "已取件",
-            PackageStatus.IN_TRANSIT: "運送中",
-            PackageStatus.SORTING: "分揀中",
-            PackageStatus.OUT_FOR_DELIVERY: "派送中",
-            PackageStatus.DELIVERED: "已送達",
-            PackageStatus.EXCEPTION: "異常狀況",
-            PackageStatus.LOST: "遺失包裹",
-            PackageStatus.DELAYED: "配送延誤",
-            PackageStatus.DAMAGED: "包裹損毀"
-        }
-        return labels.get(self.status, self.status.value)
+        return PACKAGE_STATUS_LABELS.get(self.status, self.status.value)
 
     @property
     def delivery_speed_label(self):
@@ -212,6 +214,11 @@ class TrackingEvent(Base):
     handled_by_id: Mapped[Optional[int]] = mapped_column(ForeignKey('users.id'), nullable=True)
     
     package: Mapped["Package"] = relationship("Package", back_populates="tracking_events")
+
+    @property
+    def status_label(self):
+        """獲取物流狀態的中文顯示名稱"""
+        return PACKAGE_STATUS_LABELS.get(self.status, self.status.value)
 
 class PricingRule(Base):
     """運費計算規則表"""
