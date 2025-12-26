@@ -201,7 +201,11 @@ def my_bills():
         db.select(models.Bill).filter_by(customer_id=session['user_id']).order_by(models.Bill.created_at.desc())
     ).scalars().all()
     user = db.session.get(models.Customer, session['user_id'])
-    return render_template('my_bills.html', bills=bills, balance=user.balance)
+    
+    # 計算未付款帳單總額
+    total_unpaid = sum(bill.amount for bill in bills if not bill.is_paid)
+    
+    return render_template('my_bills.html', bills=bills, balance=user.balance, customer=user, total_unpaid=total_unpaid)
 
 @main.route('/pay_bill/<int:bill_id>', methods=['POST'])
 @login_required
@@ -233,6 +237,43 @@ def pay_bill(bill_id):
         services.log_audit(session['user_id'], '帳單付款', bill_id, f'付款帳單 #{bill_id}，金額 {bill.amount}，方式 {method}')
         flash('付款成功 (Payment Successful)', 'success')
         
+    return redirect(url_for('main.my_bills'))
+
+@main.route('/pay_all_bills', methods=['POST'])
+@login_required
+def pay_all_bills():
+    if session['user_role'] != 'customer':
+        return "Unauthorized", 403
+    
+    method = request.form.get('method')
+    
+    # Get all unpaid bills for the user
+    bills = db.session.execute(
+        db.select(models.Bill).filter_by(customer_id=session['user_id'], is_paid=False)
+    ).scalars().all()
+    
+    if not bills:
+        flash('沒有待付款的帳單 (No unpaid bills)', 'info')
+        return redirect(url_for('main.my_bills'))
+        
+    count = 0
+    total_amount = 0
+    
+    for bill in bills:
+        # Mock payment processing
+        if method in models.PaymentMethod.__members__:
+            bill.payment_method = models.PaymentMethod[method]
+        
+        bill.is_paid = True
+        bill.paid_at = datetime.now()
+        count += 1
+        total_amount += bill.amount
+        
+    db.session.commit()
+    
+    services.log_audit(session['user_id'], '批量付款', None, f'批量付款 {count} 筆帳單，總額 {total_amount}，方式 {method}')
+    flash(f'成功付款 {count} 筆帳單 (Successfully paid {count} bills)', 'success')
+    
     return redirect(url_for('main.my_bills'))
 
 @main.route('/create_package', methods=['GET', 'POST'])

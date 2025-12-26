@@ -110,6 +110,7 @@ class Customer(User):
     customer_type: Mapped[CustomerType] = mapped_column(Enum(CustomerType), default=CustomerType.NON_CONTRACT)
     billing_preference: Mapped[PaymentMethod] = mapped_column(Enum(PaymentMethod), default=PaymentMethod.CASH)
     balance: Mapped[float] = mapped_column(Float, default=0.0) # 僅適用於預付型客戶
+    prepaid_by: Mapped[Optional[str]] = mapped_column(String(100), nullable=True) # 預付方名稱 (例如: 台灣積體電路股份有限公司)
     
     # 關聯設定：一個客戶可以擁有多個包裹與帳單
     packages: Mapped[List["Package"]] = relationship("Package", back_populates="sender")

@@ -33,7 +33,7 @@ with app.app_context():
     # 1. 一般客戶 (General Customer)
     u_customer = Customer(
         username='customer', 
-        full_name='一般客戶 (Customer)', 
+        full_name='王小明', 
         email='customer@test.com', 
         phone='0900111111', 
         address='台北市信義區信義路一段1號',
@@ -46,15 +46,31 @@ with app.app_context():
     # 2. 合約客戶 (Contract Customer)
     u_contract = Customer(
         username='contract', 
-        full_name='合約客戶 (Contract)', 
+        full_name='陳大明', 
         email='contract@test.com', 
         phone='0900222222', 
         address='台北市大安區和平東路二段2號',
         role=UserRole.CUSTOMER, 
-        customer_type=CustomerType.CONTRACT
+        customer_type=CustomerType.CONTRACT,
+        balance=1000.0  # 月結帳戶初始餘額
     )
     u_contract.set_password('123456')
     users.append(u_contract)
+
+    # 3. 預付客戶 (Prepaid Customer) - NEW
+    u_prepaid = Customer(
+        username='prepaid',
+        full_name='預付小弟',
+        email='prepaid@test.com',
+        phone='0900999999',
+        address='新竹科學園區力行六路1號',
+        role=UserRole.CUSTOMER,
+        customer_type=CustomerType.PREPAID,
+        balance=0.0,
+        prepaid_by='台灣積體電路股份製造有限公司'
+    )
+    u_prepaid.set_password('123456')
+    users.append(u_prepaid)
 
     # 3. 客服人員 (Customer Service)
     u_cs = Employee(

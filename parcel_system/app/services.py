@@ -39,17 +39,21 @@ def create_package(sender_id, recipient_data, package_data, payment_method=model
     )
     
     sender = db.session.get(models.Customer, sender_id)
+    
+    # Force use of PREPAID payment method for PREPAID customers
+    if sender.customer_type == models.CustomerType.PREPAID:
+        payment_method = models.PaymentMethod.PREPAID
+
     is_paid = False
     paid_at = None
     
     # 1. Handle Prepaid Balance Deduction
     if payment_method == models.PaymentMethod.PREPAID:
-        if sender.balance >= cost:
-            sender.balance -= cost
-            is_paid = True
-            paid_at = datetime.now()
-        else:
-            raise ValueError("餘額不足 (Insufficient Balance)")
+        # User requested that Prepaid customers don't need balance and are always Paid
+        # We deduce the cost (allowing negative balance) or just track it
+        sender.balance -= cost
+        is_paid = True
+        paid_at = datetime.now()
             
     # 2. Handle Online Payments (Mock)
     elif payment_method in [models.PaymentMethod.CREDIT_CARD, models.PaymentMethod.MOBILE_PAYMENT]:
