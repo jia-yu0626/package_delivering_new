@@ -6,12 +6,6 @@
 <div class="container">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
         <h2>客服中心 (CS Center)</h2>
-        {% if session.get('user_role') == 'admin' %}
-        <div class="btn-group">
-            <a href="{{ url_for('main.admin_pricing') }}" class="btn btn-outline">管理定價</a>
-            <a href="{{ url_for('main.admin_users') }}" class="btn btn-outline">管理用戶</a>
-        </div>
-        {% endif %}
     </div>
 
     <!-- User Search Section -->

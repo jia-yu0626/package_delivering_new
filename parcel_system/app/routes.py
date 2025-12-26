@@ -111,7 +111,10 @@ def dashboard():
     elif role == 'driver':
         packages = services.get_packages_for_driver(session['user_id'])
         return render_template('dashboard_employee.html', packages=packages, is_driver=True)
-    elif role in ['warehouse', 'admin']:
+    elif role == 'admin':
+        # Admin only sees pricing management
+        return render_template('dashboard_admin.html')
+    elif role == 'warehouse':
         # Warehouse sees recent packages
         recent_packages = db.session.execute(
             db.select(models.Package).order_by(models.Package.created_at.desc()).limit(20)
@@ -169,21 +172,6 @@ def admin_pricing():
         
     rules = services.get_all_pricing_rules()
     return render_template('admin_pricing.html', rules=rules)
-
-@main.route('/admin/users', methods=['GET', 'POST'])
-@login_required
-def admin_users():
-    if session.get('user_role') != 'admin':
-         return "Unauthorized", 403
-         
-    if request.method == 'POST':
-        user_id = request.form.get('user_id')
-        new_role = request.form.get('role')
-        services.update_user_role(user_id, new_role)
-        flash('使用者權限已更新', 'success')
-        
-    users = services.get_all_users()
-    return render_template('admin_users.html', users=users, roles=[r.name for r in models.UserRole])
 
 
 @main.route('/my_bills')

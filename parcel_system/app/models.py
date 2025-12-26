@@ -186,6 +186,17 @@ class Package(Base):
         }
         return labels.get(self.status, self.status.value)
 
+    @property
+    def delivery_speed_label(self):
+        """獲取服務類型的中文顯示名稱"""
+        labels = {
+            DeliverySpeed.OVERNIGHT: "隔夜達",
+            DeliverySpeed.TWO_DAY: "兩日達",
+            DeliverySpeed.STANDARD: "標準速遞",
+            DeliverySpeed.ECONOMY: "經濟速遞"
+        }
+        return labels.get(self.delivery_speed, self.delivery_speed.value)
+
 class TrackingEvent(Base):
     """物流軌跡事件 (每當包裹被掃描一次就會新增一筆)"""
     __tablename__ = 'tracking_events'
