@@ -456,3 +456,11 @@ a:hover {
 .mt-4 {
     margin-top: 2rem;
 }
+
+.text-success {
+    color: var(--success-color);
+}
+
+.text-error {
+    color: var(--error-color);
+}

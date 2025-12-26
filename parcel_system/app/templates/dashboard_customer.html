@@ -4,9 +4,26 @@
 
 {% block content %}
 <div class="container">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+    <div
+        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
         <h2>我的包裹</h2>
-        <div style="display: flex; gap: 1rem;">
+        <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+            <!-- 查詢包裹表單 -->
+            <form id="trackingSearchForm" method="GET" style="display: flex; gap: 0.5rem;"
+                data-base-url="{{ url_for('main.track') }}">
+                <input type="text" name="tracking_number" class="form-control" placeholder="輸入追蹤號碼"
+                    style="width: 180px; padding: 0.5rem 0.75rem; font-size: 0.9rem;" required>
+                <button type="submit" class="btn btn-outline" style="padding: 0.5rem 1rem;">
+                    <i class="fas fa-search"></i> 查詢
+                </button>
+            </form>
+            <script>
+                document.getElementById('trackingSearchForm').addEventListener('submit', function (e) {
+                    e.preventDefault();
+                    var trackingNumber = this.tracking_number.value;
+                    window.location.href = this.dataset.baseUrl + '/' + trackingNumber;
+                });
+            </script>
             <a href="{{ url_for('main.my_bills') }}" class="btn btn-outline">
                 <i class="fas fa-file-invoice-dollar"></i> 我的帳單
             </a>
@@ -37,6 +54,12 @@
                         <span class="badge badge-info">
                             {{ pkg.status_label }}
                         </span>
+                        {% if pkg.status.name == 'CREATED' and pkg.bill %}
+                        <span class="{{ 'text-success' if pkg.bill.is_paid else 'text-error' }}"
+                            style="margin-left: 0.5rem;">
+                            ({{ '已付款' if pkg.bill.is_paid else '未付款' }})
+                        </span>
+                        {% endif %}
                     </td>
                     <td>{{ pkg.created_at.strftime('%Y-%m-%d') }}</td>
                     <td>

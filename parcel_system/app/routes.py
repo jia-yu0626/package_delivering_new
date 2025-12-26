@@ -263,20 +263,8 @@ def create_package():
             'is_international': 'is_international' in request.form
         }
         
-        # Determine Payment Method
-        if current_user.customer_type == models.CustomerType.CONTRACT:
-            payment_method = models.PaymentMethod.MONTHLY
-        elif current_user.customer_type == models.CustomerType.PREPAID:
-            payment_method = models.PaymentMethod.PREPAID
-            third_party_account = request.form.get('third_party_account')
-            if not third_party_account:
-                flash('預付客戶必須提供第三方付款帳號 (Prepaid customers must provide a 3rd party account)', 'error')
-                return render_template('create_package.html', user=current_user)
-            # In a real app, we would validate or store this account. For now, we proceed.
-        else:
-            # Non-Contract
-            method_str = request.form.get('payment_method', 'CASH')
-            payment_method = models.PaymentMethod[method_str] if method_str in models.PaymentMethod.__members__ else models.PaymentMethod.CASH
+        # 預設使用現金付款
+        payment_method = models.PaymentMethod.CASH
 
         try:
             pkg = services.create_package(session['user_id'], recipient_data, package_data, payment_method)

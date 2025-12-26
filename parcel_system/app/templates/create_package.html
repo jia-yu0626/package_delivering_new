@@ -88,34 +88,7 @@
                 </label>
             </div>
 
-            <h4 class="section-title">付款方式 (Payment)</h4>
 
-            {% if user.customer_type.name == 'CONTRACT' %}
-            <div style="background-color: #e3f2fd; padding: 1rem; border-radius: 4px; color: #0d47a1;">
-                <strong>合約客戶 (Contract)</strong>: 費用將計入月結單 (Monthly Settlement)。<br>
-                <strong>餘額帳號 (Balance Account)</strong>: {{ '%08d' | format(user.id) }}
-            </div>
-            {% elif user.customer_type.name == 'PREPAID' %}
-            <div style="background-color: #e8f5e9; padding: 1rem; border-radius: 4px; color: #1b5e20;">
-                <p><strong>預付客戶 (Prepaid)</strong>: 費用將從餘額扣除 (Deduct from Balance)。</p>
-                <p>目前餘額: ${{ user.balance }}</p>
-                <div class="form-group" style="margin-top: 1rem;">
-                    <label class="form-label">第三方付款帳號 (Third-party Payment Account) <span
-                            style="color: red;">*</span></label>
-                    <input type="text" name="third_party_account" class="form-control" placeholder="請輸入第三方付款帳號"
-                        required>
-                </div>
-            </div>
-            {% else %}
-            <div class="form-group">
-                <label class="form-label">選擇付款方式 (Select Payment Method)</label>
-                <select name="payment_method" class="form-control">
-                    <option value="CASH">現金 (Cash)</option>
-                    <option value="CREDIT_CARD">信用卡 (Credit Card)</option>
-                    <option value="MOBILE_PAYMENT">行動支付 (Mobile Payment)</option>
-                </select>
-            </div>
-            {% endif %}
 
             <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 2rem;">建立訂單</button>
         </form>

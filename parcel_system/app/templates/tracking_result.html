@@ -17,13 +17,19 @@
             <div style="text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 0.5rem;">
                 <div>
                     <p style="color: var(--text-muted); margin-bottom: 0;">預計送達</p>
-                    <h3 style="margin-bottom: 0;">{{ package.estimated_delivery.strftime('%Y-%m-%d') if
-                        package.estimated_delivery else '計算中...' }}</h3>
+                    {% if package.estimated_delivery %}
+                    <h3 style="margin-bottom: 0;">{{ package.estimated_delivery.strftime('%Y-%m-%d') }}</h3>
+                    {% else %}
+                    <h3 style="margin-bottom: 0;">
+                        {% if package.delivery_speed.name == 'OVERNIGHT' %}1 天
+                        {% elif package.delivery_speed.name == 'TWO_DAY' %}2 天
+                        {% elif package.delivery_speed.name == 'STANDARD' %}3~5 天
+                        {% elif package.delivery_speed.name == 'ECONOMY' %}5~7 天
+                        {% else %}計算中...
+                        {% endif %}
+                    </h3>
+                    {% endif %}
                 </div>
-                <a href="{{ url_for('main.track') }}" class="btn btn-outline"
-                    style="font-size: 0.875rem; padding: 0.5rem 1rem;">
-                    <i class="fas fa-search"></i> 查詢包裹
-                </a>
                 {% if session.get('user_role') in ['warehouse'] %}
                 <a href="{{ url_for('main.edit_package', tracking_number=package.tracking_number) }}"
                     class="btn btn-primary" style="font-size: 0.875rem; padding: 0.5rem 1rem;">
