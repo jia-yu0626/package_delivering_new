@@ -288,6 +288,12 @@ def update_status(tracking_number):
     location = request.form.get('location')
     description = request.form.get('description')
     
+    # 司機只能更新為「已送達」或異常狀態
+    driver_allowed_statuses = ['DELIVERED', 'EXCEPTION', 'LOST', 'DELAYED', 'DAMAGED']
+    if session.get('user_role') == 'driver' and status not in driver_allowed_statuses:
+        flash('司機只能更新狀態為「已送達」或異常狀態', 'error')
+        return redirect(url_for('main.tracking_result', tracking_number=tracking_number))
+    
     services.add_tracking_event(tracking_number, status, location, description, session['user_id'])
     flash('狀態更新成功', 'success')
     return redirect(url_for('main.tracking_result', tracking_number=tracking_number))

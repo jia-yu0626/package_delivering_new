@@ -293,6 +293,9 @@ def auto_assign_packages():
     for index, package in enumerate(unassigned_packages):
         driver = drivers[index % num_drivers]
         package.assigned_driver_id = driver.id
+        # --- 狀態改動邏輯 ---
+        if package.status == models.PackageStatus.SORTING:
+            package.status = models.PackageStatus.OUT_FOR_DELIVERY
         assigned_count += 1
         
         # Optional: Add system note?
