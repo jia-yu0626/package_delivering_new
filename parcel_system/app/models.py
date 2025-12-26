@@ -298,3 +298,17 @@ class WarehouseStaff(Employee):
         location = self.warehouse_location_id or f"Warehouse Staff {self.id}"
         # 將狀態設為 DAMAGED 並記錄描述
         return services.add_tracking_event(tracking_number, PackageStatus.DAMAGED.name, location, f"Anomaly: {description}", user_id=self.id)
+
+class AuditLog(Base):
+    """系統操作日誌 (記錄所有重要的系統操作)"""
+    __tablename__ = 'audit_logs'
+    
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey('users.id'), nullable=False)  # 操作者 ID
+    action: Mapped[str] = mapped_column(String(50), nullable=False)  # 執行的動作
+    target_id: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)  # 被操作的對象 (可能是包裹追蹤號、用戶ID等)
+    details: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)  # 額外描述
+    timestamp: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)  # 操作時間
+    
+    # 關聯：操作者
+    user: Mapped["User"] = relationship("User")

@@ -329,4 +329,20 @@ def pay_bill_with_balance(bill_id, user_id):
     else:
         return False, "Insufficient balance"
 
-        
+def log_audit(user_id, action, target_id=None, details=None):
+    """
+    記錄系統操作日誌
+    :param user_id: 操作者的使用者 ID
+    :param action: 執行的動作 (例如: UPDATE_STATUS, ASSIGN_DRIVER, UPDATE_PRICING)
+    :param target_id: 被操作的對象 (例如: 追蹤號碼、用戶ID)
+    :param details: 額外的描述資訊
+    """
+    log_entry = models.AuditLog(
+        user_id=user_id,
+        action=action,
+        target_id=str(target_id) if target_id else None,
+        details=details
+    )
+    db.session.add(log_entry)
+    db.session.commit()
+    return log_entry

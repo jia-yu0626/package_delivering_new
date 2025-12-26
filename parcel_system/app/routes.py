@@ -55,6 +55,9 @@ def register():
             db.session.add(new_user)
             db.session.commit()
             
+            # 記錄註冊日誌
+            services.log_audit(new_user.id, '用戶註冊', new_user.id, f'新用戶註冊：{new_user.username}')
+            
             flash('註冊成功，請登入 (Registration successful, please login)', 'success')
             return redirect(url_for('main.login'))
         except Exception as e:
@@ -78,6 +81,10 @@ def login():
             session['user_id'] = user.id
             session['user_name'] = user.full_name
             session['user_role'] = user.role.value
+            
+            # 記錄登入日誌
+            services.log_audit(user.id, '用戶登入', user.id, f'用戶登入：{user.username}')
+            
             flash('登入成功 (Login successful)', 'success')
             return redirect(url_for('main.dashboard'))
         else:
@@ -168,6 +175,10 @@ def admin_pricing():
         rate_per_kg = float(request.form.get('rate_per_kg'))
         
         services.update_pricing_rule(rule_id, base_rate, rate_per_kg)
+        
+        # 記錄定價規則更新日誌
+        services.log_audit(session['user_id'], '更新定價', rule_id, f'更新定價規則：基本費 {base_rate}，每公斤 {rate_per_kg}')
+        
         flash('定價規則已更新', 'success')
         
     rules = services.get_all_pricing_rules()
@@ -198,6 +209,8 @@ def pay_bill(bill_id):
     if method == 'balance':
         success, msg = services.pay_bill_with_balance(bill_id, session['user_id'])
         if success:
+            # 記錄餘額付款日誌
+            services.log_audit(session['user_id'], '帳單付款', bill_id, f'使用餘額付款帳單 #{bill_id}')
             flash(msg, 'success')
         else:
             flash(msg, 'error')
@@ -209,6 +222,9 @@ def pay_bill(bill_id):
         bill.is_paid = True
         bill.paid_at = datetime.now()
         db.session.commit()
+        
+        # 記錄付款日誌
+        services.log_audit(session['user_id'], '帳單付款', bill_id, f'付款帳單 #{bill_id}，金額 {bill.amount}，方式 {method}')
         flash('付款成功 (Payment Successful)', 'success')
         
     return redirect(url_for('main.my_bills'))
@@ -258,6 +274,10 @@ def create_package():
 
         try:
             pkg = services.create_package(session['user_id'], recipient_data, package_data, payment_method)
+            
+            # 記錄建立包裹日誌
+            services.log_audit(session['user_id'], '建立包裹', pkg.tracking_number, f'建立包裹，收件人：{recipient_data["name"]}，運送方式：{package_data["delivery_speed"]}')
+            
             flash(f'包裹建立成功！追蹤號碼：{pkg.tracking_number}', 'success')
             return redirect(url_for('main.dashboard'))
         except Exception as e:
@@ -303,6 +323,10 @@ def update_status(tracking_number):
                 return redirect(url_for('main.tracking_result', tracking_number=tracking_number))
     
     services.add_tracking_event(tracking_number, status, location, description, session['user_id'])
+    
+    # 記錄狀態更新日誌
+    services.log_audit(session['user_id'], '更新狀態', tracking_number, f'更新狀態為 {status}，地點：{location}')
+    
     flash('狀態更新成功', 'success')
     
     # 司機和倉庫人員跳轉到儀表板清單頁面
@@ -320,6 +344,8 @@ def auto_assign():
     if count == 0:
         flash('配送失敗，只能配送分揀中的包裹', 'error')
     else:
+        # 記錄自動分配日誌
+        services.log_audit(session['user_id'], '自動分配', None, f'自動分配 {count} 個包裹給司機')
         flash(f'已自動分配 {count} 個包裹給司機 (Assigned {count} packages)', 'success')
     return redirect(url_for('main.dashboard'))
 
@@ -336,6 +362,18 @@ def edit_package(tracking_number):
         return redirect(url_for('main.dashboard'))
 
     if request.method == 'POST':
+        # 先記錄原始值以便比對變化
+        original_data = {
+            'weight': package.weight,
+            'width': package.width,
+            'height': package.height,
+            'length': package.length,
+            'delivery_speed': package.delivery_speed.name,
+            'is_fragile': package.is_fragile,
+            'is_hazardous': package.is_hazardous,
+            'is_international': package.is_international
+        }
+        
         package_data = {
             'weight': float(request.form.get('weight')),
             'width': float(request.form.get('width')),
@@ -349,6 +387,25 @@ def edit_package(tracking_number):
         
         try:
             services.update_package_details(tracking_number, package_data)
+            
+            # 記錄編輯包裹日誌 - 只記錄有修改的屬性
+            changes = []
+            if original_data['weight'] != package_data['weight']:
+                changes.append(f'重量:{original_data["weight"]}→{package_data["weight"]}kg')
+            if original_data['width'] != package_data['width'] or original_data['height'] != package_data['height'] or original_data['length'] != package_data['length']:
+                changes.append(f'尺寸:{original_data["width"]}x{original_data["height"]}x{original_data["length"]}→{package_data["width"]}x{package_data["height"]}x{package_data["length"]}cm')
+            if original_data['delivery_speed'] != package_data['delivery_speed']:
+                changes.append(f'運送:{original_data["delivery_speed"]}→{package_data["delivery_speed"]}')
+            if original_data['is_fragile'] != package_data['is_fragile']:
+                changes.append(f'易碎:{"是" if package_data["is_fragile"] else "否"}')
+            if original_data['is_hazardous'] != package_data['is_hazardous']:
+                changes.append(f'危險品:{"是" if package_data["is_hazardous"] else "否"}')
+            if original_data['is_international'] != package_data['is_international']:
+                changes.append(f'國際件:{"是" if package_data["is_international"] else "否"}')
+            
+            if changes:
+                services.log_audit(session['user_id'], '編輯包裹', tracking_number, ' | '.join(changes))
+            
             flash('包裹屬性已更新 (Attributes Updated)', 'success')
             return redirect(url_for('main.tracking_result', tracking_number=tracking_number))
         except Exception as e:
