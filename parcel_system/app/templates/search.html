@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+
+{% block title %}包裹搜尋{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+        <h2>📦 包裹進階搜尋</h2>
+        <a href="{{ url_for('main.dashboard') }}" class="btn btn-outline">返回儀表板</a>
+    </div>
+
+    <!-- 搜尋條件表單 -->
+    <div class="card" style="margin-bottom: 2rem;">
+        <h3 style="margin-bottom: 1.5rem; color: var(--primary-color);">搜尋條件</h3>
+        <form method="POST">
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem;">
+                <!-- 追蹤編號 -->
+                <div class="form-group">
+                    <label class="form-label">追蹤編號</label>
+                    <input type="text" name="tracking_number" class="form-control" placeholder="輸入完整或部分追蹤編號">
+                </div>
+
+                <!-- 客戶帳號 -->
+                <div class="form-group">
+                    <label class="form-label">客戶帳號</label>
+                    <input type="text" name="customer_username" class="form-control" placeholder="輸入客戶帳號">
+                </div>
+
+                <!-- 運送日期起始 -->
+                <div class="form-group">
+                    <label class="form-label">運送日期 (起始)</label>
+                    <input type="date" name="date_from" class="form-control">
+                </div>
+
+                <!-- 運送日期結束 -->
+                <div class="form-group">
+                    <label class="form-label">運送日期 (結束)</label>
+                    <input type="date" name="date_to" class="form-control">
+                </div>
+
+                <!-- 運輸載具識別碼 -->
+                <div class="form-group">
+                    <label class="form-label">運輸載具 (貨車車牌)</label>
+                    <select name="vehicle_id" class="form-control">
+                        <option value="">-- 選擇車輛 --</option>
+                        {% for driver in drivers %}
+                        <option value="{{ driver.vehicle_id }}">
+                            {{ driver.vehicle_id }} ({{ driver.full_name }})
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- 倉儲地點 -->
+                <div class="form-group">
+                    <label class="form-label">倉儲地點</label>
+                    <select name="warehouse_location" class="form-control">
+                        <option value="">-- 選擇地點 --</option>
+                        {% for location in locations %}
+                        <option value="{{ location }}">{{ location }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div style="margin-top: 1.5rem; display: flex; gap: 1rem;">
+                <button type="submit" class="btn btn-primary" style="flex: 1;">🔍 搜尋</button>
+                <a href="{{ url_for('main.search') }}" class="btn btn-outline"
+                    style="flex: 1; text-align: center;">清除條件</a>
+            </div>
+        </form>
+    </div>
+
+    <!-- 搜尋結果 -->
+    <div class="card">
+        <h3 style="margin-bottom: 1rem;">搜尋結果</h3>
+        {% if packages %}
+        <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="border-bottom: 1px solid var(--border-color); text-align: left;">
+                        <th style="padding: 1rem;">追蹤號碼</th>
+                        <th style="padding: 1rem;">寄件人</th>
+                        <th style="padding: 1rem;">收件人</th>
+                        <th style="padding: 1rem;">狀態</th>
+                        <th style="padding: 1rem;">建立時間</th>
+                        <th style="padding: 1rem;">運費</th>
+                        <th style="padding: 1rem;">操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for pkg in packages %}
+                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                        <td style="padding: 1rem; font-family: monospace;">{{ pkg.tracking_number }}</td>
+                        <td style="padding: 1rem;">{{ pkg.sender.full_name }}</td>
+                        <td style="padding: 1rem;">{{ pkg.recipient_name }}</td>
+                        <td style="padding: 1rem;">
+                            {% if pkg.status.name in ['EXCEPTION', 'LOST', 'DELAYED', 'DAMAGED'] %}
+                            <span style="color: #ff6b6b; font-weight: bold;">{{ pkg.status_label }}</span>
+                            {% elif pkg.status.name == 'DELIVERED' %}
+                            <span style="color: #4cd964; font-weight: bold;">{{ pkg.status_label }}</span>
+                            {% else %}
+                            <span style="color: var(--primary-color);">{{ pkg.status_label }}</span>
+                            {% endif %}
+                        </td>
+                        <td style="padding: 1rem;">{{ pkg.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                        <td style="padding: 1rem;">NT$ {{ pkg.shipping_cost }}</td>
+                        <td style="padding: 1rem;">
+                            <a href="{{ url_for('main.tracking_result', tracking_number=pkg.tracking_number) }}"
+                                class="btn btn-outline" style="padding: 0.25rem 0.75rem;">查看</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <p style="margin-top: 1rem; color: var(--text-muted); text-align: right;">
+            共找到 <strong>{{ packages|length }}</strong> 筆包裹
+        </p>
+        {% else %}
+        <p style="text-align: center; color: var(--text-muted); padding: 3rem;">
+            {% if request.method == 'POST' %}
+            找不到符合條件的包裹，請嘗試不同的搜尋條件。
+            {% else %}
+            請輸入搜尋條件後點擊「搜尋」按鈕。
+            {% endif %}
+        </p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
