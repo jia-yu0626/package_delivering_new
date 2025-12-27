@@ -78,7 +78,9 @@ def test_warehouse_flow(app):
         
         # 2. Sort Package
         services.add_tracking_event(pkg.tracking_number, "SORTING", "Hub", "Sorted", wh.id)
-        assert updated_pkg.status == models.PackageStatus.SORTING
+        # Need to refresh the package object
+        pkg_refreshed = services.get_package_by_tracking(pkg.tracking_number)
+        assert pkg_refreshed.status == models.PackageStatus.SORTING
 
 def test_driver_flow(app):
     """Test Driver delivery list and exception reporting."""
@@ -93,20 +95,27 @@ def test_driver_flow(app):
         pkg = services.create_package(customer.id, {'name':'R','address':'A','phone':'P'}, 
                                     {'weight':1, 'width':1, 'height':1, 'length':1, 'package_type':'SMALL_BOX', 'delivery_speed':'STANDARD'})
         
-        # Make package ready for driver (SORTING)
+        # Make package ready for driver (SORTING) and assign driver
         services.add_tracking_event(pkg.tracking_number, "SORTING", "Hub", "Sorted")
+        pkg_obj = services.get_package_by_tracking(pkg.tracking_number)
+        pkg_obj.assigned_driver_id = driver.id
+        db.session.commit()
         
-        # 1. Check Driver List
-        list = services.get_packages_for_driver(driver.id)
-        assert pkg in list
+        # 1. Check Driver List - packages must be in SORTING/PICKED_UP/OUT_FOR_DELIVERY status
+        driver_packages = services.get_packages_for_driver(driver.id)
+        # Refresh to get latest state
+        pkg_refreshed = services.get_package_by_tracking(pkg.tracking_number)
+        assert pkg_refreshed in driver_packages
         
         # 2. Driver pickup
         services.add_tracking_event(pkg.tracking_number, "OUT_FOR_DELIVERY", "Truck", "Go", driver.id)
-        assert pkg.status == models.PackageStatus.OUT_FOR_DELIVERY
+        pkg_after_pickup = services.get_package_by_tracking(pkg.tracking_number)
+        assert pkg_after_pickup.status == models.PackageStatus.OUT_FOR_DELIVERY
         
         # 3. Exception
         services.add_tracking_event(pkg.tracking_number, "DELAYED", "Road", "Traffic", driver.id)
-        assert pkg.status == models.PackageStatus.DELAYED
+        pkg_delayed = services.get_package_by_tracking(pkg.tracking_number)
+        assert pkg_delayed.status == models.PackageStatus.DELAYED
 
 def test_cs_admin_flow(app):
     """Test CS search and Admin pricing update."""
