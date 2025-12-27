@@ -15,26 +15,26 @@
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                 <div class="form-group">
                     <label class="form-label">重量 (kg)</label>
-                    <input type="number" step="0.1" name="weight" class="form-control" value="{{ package.weight }}"
-                        required>
+                    <input type="number" step="0.1" min="0" name="weight" class="form-control"
+                        value="{{ package.weight }}" required>
                 </div>
             </div>
 
             <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;">
                 <div class="form-group">
                     <label class="form-label">長 (cm)</label>
-                    <input type="number" step="1" name="length" class="form-control" value="{{ package.length }}"
-                        required>
+                    <input type="number" step="1" min="0" name="length" class="form-control"
+                        value="{{ package.length }}" required>
                 </div>
                 <div class="form-group">
                     <label class="form-label">寬 (cm)</label>
-                    <input type="number" step="1" name="width" class="form-control" value="{{ package.width }}"
+                    <input type="number" step="1" min="0" name="width" class="form-control" value="{{ package.width }}"
                         required>
                 </div>
                 <div class="form-group">
                     <label class="form-label">高 (cm)</label>
-                    <input type="number" step="1" name="height" class="form-control" value="{{ package.height }}"
-                        required>
+                    <input type="number" step="1" min="0" name="height" class="form-control"
+                        value="{{ package.height }}" required>
                 </div>
             </div>
 

@@ -410,10 +410,10 @@ def edit_package(tracking_number):
         }
         
         package_data = {
-            'weight': float(request.form.get('weight')),
-            'width': float(request.form.get('width')),
-            'height': float(request.form.get('height')),
-            'length': float(request.form.get('length')),
+            'weight': max(0, float(request.form.get('weight'))),
+            'width': max(0, float(request.form.get('width'))),
+            'height': max(0, float(request.form.get('height'))),
+            'length': max(0, float(request.form.get('length'))),
             'delivery_speed': request.form.get('delivery_speed'),
             'is_fragile': 'is_fragile' in request.form,
             'is_hazardous': 'is_hazardous' in request.form,
