@@ -6,11 +6,12 @@
 <div class="container">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
         <h2>客服中心 (CS Center)</h2>
+        <a href="{{ url_for('main.search') }}" class="btn btn-primary">🔍 進階搜尋</a>
     </div>
 
     <!-- User Search Section -->
     <div class="card" style="margin-bottom: 2rem;">
-        <h3 style="margin-bottom: 1rem;">客戶查詢 (Customer Search)</h3>
+        <h3 style="margin-bottom: 1rem;">客戶快速查詢</h3>
         <form action="{{ url_for('main.cs_search_user') }}" method="POST" style="display: flex; gap: 1rem;">
             <input type="text" name="query" class="form-control" placeholder="輸入姓名、電話或 Email"
                 value="{{ search_query if search_query else '' }}" required>
