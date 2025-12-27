@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block title %}客戶詳情 - {{ customer.full_name }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div style="margin-bottom: 2rem;">
+        <a href="{{ url_for('main.dashboard') }}" style="color: var(--text-muted); text-decoration: none;">&larr;
+            返回儀表板</a>
+    </div>
+
+    <div class="card" style="margin-bottom: 2rem;">
+        <h2 style="margin-bottom: 1rem;">{{ customer.full_name }}</h2>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+            <div>
+                <p style="color: var(--text-muted); font-size: 0.875rem;">用戶名</p>
+                <p>{{ customer.username }}</p>
+            </div>
+            <div>
+                <p style="color: var(--text-muted); font-size: 0.875rem;">Email</p>
+                <p>{{ customer.email }}</p>
+            </div>
+            <div>
+                <p style="color: var(--text-muted); font-size: 0.875rem;">電話</p>
+                <p>{{ customer.phone }}</p>
+            </div>
+            <div>
+                <p style="color: var(--text-muted); font-size: 0.875rem;">客戶類型</p>
+                <p>{{ customer.type_label }}</p>
+            </div>
+        </div>
+    </div>
+
+    <h3 style="margin-bottom: 1rem;">最近貨件 (Recent Packages)</h3>
+    <div class="card" style="margin-bottom: 2rem;">
+        {% if packages %}
+        <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+                <tr style="border-bottom: 1px solid var(--border-color); text-align: left;">
+                    <th style="padding: 1rem;">追蹤號碼</th>
+                    <th style="padding: 1rem;">收件人</th>
+                    <th style="padding: 1rem;">狀態</th>
+                    <th style="padding: 1rem;">運費</th>
+                    <th style="padding: 1rem;">建立日期</th>
+                    <th style="padding: 1rem;">操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for pkg in packages %}
+                <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                    <td style="padding: 1rem; font-family: monospace;">{{ pkg.tracking_number }}</td>
+                    <td style="padding: 1rem;">{{ pkg.recipient_name }}</td>
+                    <td style="padding: 1rem;">
+                        <span
+                            style="padding: 0.25rem 0.5rem; background: rgba(255,255,255,0.1); border-radius: 4px; font-size: 0.875rem;">
+                            {{ pkg.status_label }}
+                        </span>
+                    </td>
+                    <td style="padding: 1rem;">NT$ {{ pkg.shipping_cost }}</td>
+                    <td style="padding: 1rem;">{{ pkg.created_at.strftime('%Y-%m-%d') }}</td>
+                    <td style="padding: 1rem;">
+                        <a href="{{ url_for('main.tracking_result', tracking_number=pkg.tracking_number) }}"
+                            class="btn btn-outline" style="padding: 0.25rem 0.75rem;">查看</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p style="text-align: center; color: var(--text-muted); padding: 1rem;">無包裹記錄。</p>
+        {% endif %}
+    </div>
+
+    <h3 style="margin-bottom: 1rem;">帳單記錄 (Billing History)</h3>
+    <div class="card">
+        {% if bills %}
+        <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+                <tr style="border-bottom: 1px solid var(--border-color); text-align: left;">
+                    <th style="padding: 1rem;">帳單編號</th>
+                    <th style="padding: 1rem;">包裹追蹤碼</th>
+                    <th style="padding: 1rem;">金額</th>
+                    <th style="padding: 1rem;">狀態</th>
+                    <th style="padding: 1rem;">日期</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for bill in bills %}
+                <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                    <td style="padding: 1rem;">#{{ bill.id }}</td>
+                    <td style="padding: 1rem; font-family: monospace;">{{ bill.package.tracking_number }}</td>
+                    <td style="padding: 1rem;">NT$ {{ bill.amount }}</td>
+                    <td style="padding: 1rem;">
+                        {% if bill.is_paid %}
+                        <span style="color: var(--success-color);">
+                            <i class="fas fa-check-circle"></i> 已付款 ({{ bill.paid_at.strftime('%Y-%m-%d') }})
+                        </span>
+                        {% else %}
+                        <span style="color: #ff6b6b;">未付款</span>
+                        {% endif %}
+                    </td>
+                    <td style="padding: 1rem;">{{ bill.created_at.strftime('%Y-%m-%d') }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p style="text-align: center; color: var(--text-muted); padding: 1rem;">無帳單記錄。</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

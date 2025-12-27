@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block title %}客服儀表板{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+        <h2>客服中心 (CS Center)</h2>
+    </div>
+
+    <!-- User Search Section -->
+    <div class="card" style="margin-bottom: 2rem;">
+        <h3 style="margin-bottom: 1rem;">客戶查詢 (Customer Search)</h3>
+        <form action="{{ url_for('main.cs_search_user') }}" method="POST" style="display: flex; gap: 1rem;">
+            <input type="text" name="query" class="form-control" placeholder="輸入姓名、電話或 Email"
+                value="{{ search_query if search_query else '' }}" required>
+            <button type="submit" class="btn btn-primary">搜尋</button>
+        </form>
+
+        {% if search_results %}
+        <div style="margin-top: 1.5rem;">
+            <h4>搜尋結果</h4>
+            <table style="width: 100%; border-collapse: collapse; margin-top: 1rem;">
+                <thead>
+                    <tr style="border-bottom: 1px solid var(--border-color); text-align: left;">
+                        <th style="padding: 0.5rem;">ID</th>
+                        <th style="padding: 0.5rem;">姓名</th>
+                        <th style="padding: 0.5rem;">Email</th>
+                        <th style="padding: 0.5rem;">電話</th>
+                        <th style="padding: 0.5rem;">操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in search_results %}
+                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                        <td style="padding: 0.5rem;">{{ user.id }}</td>
+                        <td style="padding: 0.5rem;">{{ user.full_name }}</td>
+                        <td style="padding: 0.5rem;">{{ user.email }}</td>
+                        <td style="padding: 0.5rem;">{{ user.phone }}</td>
+                        <td style="padding: 0.5rem;">
+                            <a href="{{ url_for('main.cs_customer_detail', user_id=user.id) }}" class="btn btn-outline"
+                                style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">查詢帳戶</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Exception Monitoring -->
+    <h3 style="margin-bottom: 1rem; color: #ff6b6b;">需要關注的異常包裹 (Exceptions)</h3>
+    <div class="card">
+        {% if exceptions %}
+        <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+                <tr style="border-bottom: 1px solid var(--border-color); text-align: left;">
+                    <th style="padding: 1rem;">追蹤號碼</th>
+                    <th style="padding: 1rem;">狀態</th>
+                    <th style="padding: 1rem;">最新事件</th>
+                    <th style="padding: 1rem;">更新時間</th>
+                    <th style="padding: 1rem;">操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for pkg in exceptions %}
+                <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                    <td style="padding: 1rem; font-family: monospace;">{{ pkg.tracking_number }}</td>
+                    <td style="padding: 1rem;">
+                        <span style="color: #ff6b6b; font-weight: bold;">{{ pkg.status_label }}</span>
+                    </td>
+                    <td style="padding: 1rem;">
+                        {% if pkg.tracking_events %}
+                        {{ pkg.tracking_events[-1].description }}
+                        {% else %}
+                        -
+                        {% endif %}
+                    </td>
+                    <td style="padding: 1rem;">
+                        {% if pkg.tracking_events %}
+                        {{ pkg.tracking_events[-1].timestamp.strftime('%Y-%m-%d %H:%M') }}
+                        {% else %}
+                        -
+                        {% endif %}
+                    </td>
+                    <td style="padding: 1rem;">
+                        <a href="{{ url_for('main.tracking_result', tracking_number=pkg.tracking_number) }}"
+                            class="btn btn-outline" style="padding: 0.25rem 0.75rem;">查看</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p style="text-align: center; color: var(--text-muted); padding: 2rem;">目前沒有異常包裹。</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

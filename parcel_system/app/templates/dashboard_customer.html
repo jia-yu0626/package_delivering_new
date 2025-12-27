@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block title %}我的帳戶{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div
+        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+        <h2>我的包裹</h2>
+        <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+            <a href="{{ url_for('main.my_bills') }}" class="btn btn-outline">
+                <i class="fas fa-file-invoice-dollar"></i> 我的帳單
+            </a>
+            <a href="{{ url_for('main.create_package') }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> 寄送新包裹
+            </a>
+        </div>
+    </div>
+
+    <div class="card">
+        {% if packages %}
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>追蹤號碼</th>
+                    <th>收件人</th>
+                    <th>狀態</th>
+                    <th>建立日期</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for pkg in packages %}
+                <tr>
+                    <td style="font-family: 'Roboto Mono', monospace;">{{ pkg.tracking_number }}</td>
+                    <td>{{ pkg.recipient_name }}</td>
+                    <td>
+                        <span class="badge badge-info">
+                            {{ pkg.status_label }}
+                        </span>
+                        {% if pkg.status.name == 'CREATED' and pkg.bill %}
+                        <span class="{{ 'text-success' if pkg.bill.is_paid else 'text-error' }}"
+                            style="margin-left: 0.5rem;">
+                            ({{ '已付款' if pkg.bill.is_paid else '未付款' }})
+                        </span>
+                        {% endif %}
+                    </td>
+                    <td>{{ pkg.created_at.strftime('%Y-%m-%d') }}</td>
+                    <td>
+                        <a href="{{ url_for('main.tracking_result', tracking_number=pkg.tracking_number) }}"
+                            class="btn btn-outline" style="padding: 0.25rem 0.75rem; font-size: 0.85rem;">查看</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div style="text-align: center; padding: 3rem;">
+            <p style="color: var(--text-muted); margin-bottom: 1rem;">您尚未寄送任何包裹。</p>
+            <a href="{{ url_for('main.create_package') }}" class="btn btn-primary">立即寄件</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

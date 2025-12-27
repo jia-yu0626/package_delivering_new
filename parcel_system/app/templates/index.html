@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block title %}首頁{% endblock %}
+
+{% block content %}
+<div class="container">
+    <section class="hero">
+        <h1>全球物流，盡在掌握</h1>
+        <p>輸入您的追蹤號碼，即時掌握包裹動態。安全、快速、可靠。</p>
+
+        <div class="card" style="max-width: 600px; margin: 0 auto;">
+            <form action="{{ url_for('main.track') }}" method="POST" style="display: flex; gap: 1rem;">
+                <input type="text" name="tracking_number" class="form-control" placeholder="輸入追蹤號碼 (例如: TW-12345678)"
+                    required style="flex: 1;">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-search"></i> 追蹤
+                </button>
+            </form>
+        </div>
+    </section>
+
+    <div class="features-grid">
+        <div class="card">
+            <i class="fas fa-bolt" style="font-size: 2rem; color: var(--primary-color); margin-bottom: 1rem;"></i>
+            <h3>完全不極速配送</h3>
+            <p style="color: var(--text-muted);">猴子爬樹可能會摔下來，請多多包容。</p>
+        </div>
+        <div class="card">
+            <i class="fas fa-globe" style="font-size: 2rem; color: var(--secondary-color); margin-bottom: 1rem;"></i>
+            <h3>怎麼可能全球覆蓋</h3>
+            <p style="color: var(--text-muted);">只給香蕉，就只能請到猴子。</p>
+        </div>
+        <div class="card">
+            <i class="fas fa-shield-alt" style="font-size: 2rem; color: var(--success-color); margin-bottom: 1rem;"></i>
+            <h3>安全保障?蛤?</h3>
+            <p style="color: var(--text-muted);">溫馨提醒!!!猴子可能中途拆開包裹。</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

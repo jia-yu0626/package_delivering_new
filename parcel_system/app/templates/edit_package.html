@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block title %}編輯包裹屬性{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="card" style="max-width: 800px; margin: 0 auto;">
+        <h2 style="margin-bottom: 2rem; text-align: center;">編輯包裹屬性 (倉庫確認)</h2>
+        <p style="text-align: center; color: var(--text-muted);">追蹤號碼: {{ package.tracking_number }}</p>
+
+        <form method="POST">
+            <h4
+                style="color: var(--primary-color); margin: 2rem 0 1rem 0; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+                物理規格 (Physical Specs)</h4>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div class="form-group">
+                    <label class="form-label">重量 (kg)</label>
+                    <input type="number" step="0.1" name="weight" class="form-control" value="{{ package.weight }}"
+                        required>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;">
+                <div class="form-group">
+                    <label class="form-label">長 (cm)</label>
+                    <input type="number" step="1" name="length" class="form-control" value="{{ package.length }}"
+                        required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">寬 (cm)</label>
+                    <input type="number" step="1" name="width" class="form-control" value="{{ package.width }}"
+                        required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">高 (cm)</label>
+                    <input type="number" step="1" name="height" class="form-control" value="{{ package.height }}"
+                        required>
+                </div>
+            </div>
+
+            <h4
+                style="color: var(--primary-color); margin: 2rem 0 1rem 0; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+                服務選項 (Service Options)</h4>
+            <div class="form-group">
+                <label class="form-label">配送速度</label>
+                <select name="delivery_speed" class="form-control">
+                    {% for speed in ['STANDARD', 'OVERNIGHT', 'TWO_DAY', 'ECONOMY'] %}
+                    <option value="{{ speed }}" {% if package.delivery_speed.name==speed %}selected{% endif %}>{{ speed
+                        }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <h4
+                style="color: var(--primary-color); margin: 2rem 0 1rem 0; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+                特殊標記 (Flags)</h4>
+            <div style="display: flex; gap: 2rem; margin-top: 1rem;">
+                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                    <input type="checkbox" name="is_fragile" value="1" {% if package.is_fragile %}checked{% endif %}>
+                    <span>易碎品 (Fragile)</span>
+                </label>
+                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                    <input type="checkbox" name="is_hazardous" value="1" {% if package.is_hazardous %}checked{% endif
+                        %}>
+                    <span>危險品 (Hazardous)</span>
+                </label>
+                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                    <input type="checkbox" name="is_international" value="1" {% if package.is_international %}checked{%
+                        endif %}>
+                    <span>國際件 (International)</span>
+                </label>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 2rem;">確認並更新 (Confirm &
+                Update)</button>
+            <a href="{{ url_for('main.tracking_result', tracking_number=package.tracking_number) }}"
+                class="btn btn-outline" style="width: 100%; margin-top: 1rem; text-align: center;">取消</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,47 @@
+# 包裹追蹤與計費系統 (Parcel Tracking and Billing System) - 實作計畫
+
+## 1. 專案規劃 (Project Planning)
+本專案旨在開發一套基於 Python 的包裹追蹤與計費系統，滿足物流公司的核心業務需求。
+
+### 技術堆疊 (Technology Stack)
+- **後端語言**: Python 3.x
+- **Web 框架**: Flask (輕量級，適合快速開發與展示)
+- **資料庫 ORM**: SQLAlchemy (對應類別圖結構)
+- **資料庫**: SQLite (開發用，易於攜帶與設置)
+- **前端**: HTML5, Vanilla CSS3 (現代化設計), Vanilla JavaScript
+- **測試框架**: pytest (單元測試)
+
+### 開發階段 (Development Phases)
+1.  **系統建模與資料庫設計**: 根據類別圖建立 Python Models (`models.py`)。
+2.  **核心業務邏輯實作**: 實作客戶管理、包裹建立、追蹤事件記錄、計費邏輯 (`services.py`)。
+3.  **Web 介面開發**:
+    - 設計現代化、響應式的 UI (繁體中文)。
+    - 實作各角色 (客戶、司機、管理員、客服人員、倉儲人員) 的操作介面。
+4.  **測試與驗證**: 撰寫單元測試 (`tests/`) 確保功能正確性。
+5.  **文件與報告產出**: 整理專案報告所需的各項說明。
+
+## 2. 系統架構 (System Architecture)
+採用 MVC (Model-View-Controller) 架構模式：
+- **Model**: 定義資料結構 (User, Package, TrackingEvent 等)。
+- **View**: 前端 HTML 模板，負責展示資料。
+- **Controller**: Flask Routes，處理使用者請求並呼叫業務邏輯。
+
+## 3. 待辦事項 (Task List)
+- [x] 初始化專案結構與環境設定 (`requirements.txt`)
+- [x] 實作資料庫模型 (`app/models.py`) - **優先**
+- [x] 實作核心服務邏輯 (`app/services.py`)
+- [x] 建立 Web 應用程式入口 (`run.py`, `app/__init__.py`)
+- [x] 設計前端樣式 (`app/static/css/style.css`) - **需符合現代美學**
+- [x] 註冊按鈕大小需調整，包裹服務類型沒有顯示
+- [X] 實作主要頁面 (首頁, 追蹤頁, 登入頁, 後台管理)
+- [x] 司機的編輯屬性需刪除
+- [x] 客服人員的編輯屬性需刪除，運送進度取消
+- [x] 系統管理員修改計費規則，其他功能全部刪除，從資料庫查看所有帳號密碼
+- [x] 客戶我的帳單勾選框，計算總額     
+- [x] 判斷運送進度邏輯
+- [x] 合約客戶立即寄件壞掉
+- [ ] 管理員服務類型改為中文
+- [ ] 倉儲人員編輯屬性重量長度寬度高度，會有負數的現象
+- [ ] 倉儲人員編輯屬性服務配送速度改為中文
+- [ ] 倉儲人員更新包裹進度需調整
+- [ ] 撰寫測試案例 (`tests/test_core.py`)

@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block title %}系統管理員儀表板{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2 style="margin-bottom: 2rem;">系統管理員儀表板 (Admin Dashboard)</h2>
+
+    <div class="card">
+        <h3>系統管理功能</h3>
+        <p style="color: var(--text-muted); margin-bottom: 1.5rem;">
+            系統管理員可修改計費規則。如需查看帳號資訊，請直接存取資料庫。
+        </p>
+
+        <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+            <a href="{{ url_for('main.admin_pricing') }}" class="btn btn-primary"
+                style="display: flex; align-items: center; gap: 0.5rem;">
+                <i class="fas fa-dollar-sign"></i> 管理定價規則
+            </a>
+        </div>
+    </div>
+
+    <div class="card" style="margin-top: 2rem;">
+        <h3>資料庫資訊</h3>
+        <p style="color: var(--text-muted);">
+            帳號密碼資訊請透過資料庫管理工具查看。<br>
+            資料庫位置：<code>parcel_system/instance/parcel.db</code>
+        </p>
+        <p style="color: var(--text-muted); font-size: 0.875rem;">
+            使用 SQLite 工具（如 DB Browser for SQLite）開啟資料庫，查看 <code>user</code> 表格。
+        </p>
+    </div>
+</div>
+{% endblock %}

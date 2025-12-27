@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+
+{% block title %}我的帳單{% endblock %}
+
+{% block content %}
+<div class="container">
+    <style>
+        .text-danger-custom {
+            color: #ff3b30 !important;
+        }
+
+        .text-success-custom {
+            color: #4cd964 !important;
+        }
+    </style>
+    <h2 style="margin-bottom: 2rem;">我的帳單 (My Bills)</h2>
+
+    <div class="card">
+        {% if bills %}
+        <table style="width: 100%; border-collapse: collapse; color: #fff;">
+            <thead>
+                <tr style="border-bottom: 1px solid var(--border-color); text-align: left;">
+                    <th style="padding: 1rem;">帳單編號</th>
+                    <th style="padding: 1rem;">包裹追蹤碼</th>
+                    <th style="padding: 1rem;">金額</th>
+                    <th style="padding: 1rem;">狀態</th>
+                    <th style="padding: 1rem;">建立日期</th>
+
+                </tr>
+            </thead>
+            <tbody>
+                {% for bill in bills %}
+                <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                    <td style="padding: 1rem;">#{{ bill.id }}</td>
+                    <td style="padding: 1rem; font-family: monospace;">
+                        <a href="{{ url_for('main.tracking_result', tracking_number=bill.package.tracking_number) }}"
+                            style="color: var(--primary-color);">
+                            {{ bill.package.tracking_number }}
+                        </a>
+                    </td>
+                    <td style="padding: 1rem;">NT$ {{ bill.amount }}</td>
+                    <td style="padding: 1rem;">
+                        {% if bill.is_paid %}
+                        <span style="color: #4cd964; font-weight: bold;">已付款</span>
+                        {% else %}
+                        <span style="color: #ff3b30; font-weight: bold;">未付款</span>
+                        {% endif %}
+                    </td>
+                    <td style="padding: 1rem;">{{ bill.created_at.strftime('%Y-%m-%d') }}</td>
+
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <!-- 付款方式區塊 -->
+        <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--border-color);">
+            <h4 style="margin-bottom: 1rem;">付款方式</h4>
+            {% if customer.customer_type.name == 'CONTRACT' %}
+            <div
+                style="display: flex; align-items: center; justify-content: space-between; padding: 1rem; background: rgba(76, 217, 100, 0.1); border-radius: 8px; border: 1px solid rgba(76, 217, 100, 0.3); flex-wrap: wrap; gap: 1rem;">
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <i class="fas fa-building" style="color: #4cd964;"></i>
+                    <span style="font-weight: 600; color: #4cd964;">月結帳戶</span>
+                    <span style="color: var(--text-muted); margin-left: 0.5rem;">所有帳單將於月底統一結算</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <i class="fas fa-wallet" style="color: #4cd964;"></i>
+                    <span style="color: var(--text-muted);">帳戶餘額：</span>
+                    <span
+                        class="{{ 'text-danger-custom' if total_unpaid > customer.balance else 'text-success-custom' }}"
+                        style="font-weight: 600; font-size: 1.1rem;">NT$
+                        {{ customer.balance }}</span>
+                </div>
+                {% if total_unpaid > customer.balance %}
+                <div
+                    style="flex-basis: 100%; margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px solid rgba(255, 59, 48, 0.3); color: #ff3b30;">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <span style="font-weight: 600;">餘額不足，請加值</span>
+                    <span style="font-size: 0.9rem; opacity: 0.8;">(未付款總額: NT$ {{ total_unpaid }})</span>
+                </div>
+                {% endif %}
+            </div>
+            {% elif customer.customer_type.name == 'PREPAID' %}
+            <div
+                style="display: flex; align-items: center; justify-content: center; padding: 1.5rem; background: rgba(76, 217, 100, 0.1); border-radius: 8px; border: 1px solid rgba(76, 217, 100, 0.3); margin-top: 1rem;">
+                <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 1.1rem;">
+                    <i class="fas fa-check-circle" style="color: #4cd964;"></i>
+                    <span style="color: #4cd964; font-weight: 600;">已由 {{ customer.prepaid_by }} 付款</span>
+                </div>
+            </div>
+            {% else %}
+            <form action="{{ url_for('main.pay_all_bills') }}" method="POST">
+                <div
+                    style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+                    <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
+                        <label style="color: var(--text-muted);">選擇付款方式：</label>
+                        <select name="method" id="paymentMethod" class="form-control"
+                            style="width: auto; padding: 0.5rem 1rem;">
+                            <option value="CASH">現金付款</option>
+                            <option value="CREDIT_CARD">信用卡</option>
+                            <option value="MOBILE_PAYMENT">行動支付</option>
+                        </select>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 1.5rem;">
+                        <div style="text-align: right;">
+                            <span style="color: var(--text-muted); font-size: 0.875rem;">未付款總額</span>
+                            <div class="{{ 'text-danger-custom' if total_unpaid > 0 else 'text-success-custom' }}"
+                                style="font-size: 1.5rem; font-weight: 700;">
+                                NT$ {{ total_unpaid }}
+                            </div>
+                        </div>
+                        {% if total_unpaid > 0 %}
+                        <button type="submit" class="btn btn-primary" style="padding: 0.75rem 1.5rem;">
+                            <i class="fas fa-credit-card"></i> 立即付款
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </form>
+            {% endif %}
+        </div>
+        {% else %}
+        <div style="text-align: center; padding: 2rem;">
+            <p style="color: var(--text-muted);">目前沒有帳單。</p>
+            <a href="{{ url_for('main.create_package') }}" class="btn btn-primary">寄送包裹</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
