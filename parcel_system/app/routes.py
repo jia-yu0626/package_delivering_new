@@ -634,3 +634,72 @@ def admin_create_user():
                 flash(f'建立失敗：{str(e)}', 'error')
     
     return render_template('admin_create_user.html')
+
+@main.route('/admin/delete_user/<int:user_id>', methods=['POST'])
+@login_required
+def admin_delete_user(user_id):
+    """管理員：刪除帳號"""
+    if session.get('user_role') != 'admin':
+        return "Unauthorized", 403
+    
+    # 不能刪除自己
+    if user_id == session.get('user_id'):
+        flash('無法刪除自己的帳號', 'error')
+        return redirect(url_for('main.admin_users'))
+    
+    user = db.session.get(models.User, user_id)
+    if not user:
+        flash('找不到該使用者', 'error')
+        return redirect(url_for('main.admin_users'))
+    
+    # 檢查是否為最後一個管理員
+    if user.role == models.UserRole.ADMIN:
+        admin_count = db.session.execute(
+            db.select(models.User).filter_by(role=models.UserRole.ADMIN)
+        ).scalars().all()
+        if len(admin_count) <= 1:
+            flash('無法刪除最後一個管理員帳號', 'error')
+            return redirect(url_for('main.admin_users'))
+    
+    username = user.username
+    
+    try:
+        # 如果是客戶，需要先刪除相關的包裹、帳單、追蹤事件
+        if user.role == models.UserRole.CUSTOMER:
+            # 取得該客戶的所有包裹
+            packages = db.session.execute(
+                db.select(models.Package).filter_by(sender_id=user_id)
+            ).scalars().all()
+            
+            for package in packages:
+                # 刪除追蹤事件
+                db.session.execute(
+                    db.delete(models.TrackingEvent).where(models.TrackingEvent.package_id == package.id)
+                )
+                # 刪除帳單
+                db.session.execute(
+                    db.delete(models.Bill).where(models.Bill.package_id == package.id)
+                )
+                # 刪除包裹
+                db.session.delete(package)
+        
+        # 刪除該用戶的審計日誌
+        db.session.execute(
+            db.delete(models.AuditLog).where(models.AuditLog.user_id == user_id)
+        )
+        
+        # 刪除用戶
+        db.session.delete(user)
+        db.session.commit()
+        
+        # 記錄操作日誌（使用當前管理員的 ID）
+        services.log_audit(session['user_id'], '刪除帳號', user_id, 
+                         f'管理員刪除帳號：{username}')
+        
+        flash(f'帳號 {username} 已成功刪除', 'success')
+        
+    except Exception as e:
+        db.session.rollback()
+        flash(f'刪除失敗：{str(e)}', 'error')
+    
+    return redirect(url_for('main.admin_users'))
