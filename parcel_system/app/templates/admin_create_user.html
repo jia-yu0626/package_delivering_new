@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+
+{% block title %}新增帳號{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 700px; margin: 0 auto;">
+    <h2 style="margin-bottom: 2rem;">新增帳號</h2>
+
+    <div class="card" style="padding: 2rem;">
+        <form method="POST" id="createUserForm">
+            <!-- 基本欄位 -->
+            <h3 style="margin-bottom: 1.5rem; color: var(--primary);">基本資料</h3>
+
+            <div class="form-group">
+                <label class="form-label">使用者名稱 <span style="color: var(--danger);">*</span></label>
+                <input type="text" name="username" class="form-control" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">密碼 <span style="color: var(--danger);">*</span></label>
+                <input type="password" name="password" class="form-control" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">全名 <span style="color: var(--danger);">*</span></label>
+                <input type="text" name="full_name" class="form-control" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Email <span style="color: var(--danger);">*</span></label>
+                <input type="email" name="email" class="form-control" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">電話 <span style="color: var(--danger);">*</span></label>
+                <input type="tel" name="phone" class="form-control" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">地址</label>
+                <textarea name="address" class="form-control" rows="2"></textarea>
+            </div>
+
+            <!-- 角色選擇 -->
+            <h3 style="margin: 2rem 0 1.5rem; color: var(--primary);">角色設定</h3>
+
+            <div class="form-group">
+                <label class="form-label">角色類型 <span style="color: var(--danger);">*</span></label>
+                <select name="role" id="roleSelect" class="form-control" required>
+                    <option value="">請選擇角色</option>
+                    <option value="customer">客戶</option>
+                    <option value="driver">司機</option>
+                    <option value="warehouse">倉儲人員</option>
+                    <option value="customer_service">客服人員</option>
+                    <option value="admin">管理員</option>
+                </select>
+            </div>
+
+            <!-- 客戶專屬欄位 -->
+            <div id="customerFields" style="display: none;">
+                <div
+                    style="background: rgba(var(--info-rgb, 52, 152, 219), 0.1); padding: 1.5rem; border-radius: 8px; margin-bottom: 1rem;">
+                    <h4 style="margin-bottom: 1rem; color: var(--info);">
+                        <i class="fas fa-user"></i> 客戶專屬資料
+                    </h4>
+
+                    <div class="form-group">
+                        <label class="form-label">客戶類型 <span style="color: var(--danger);">*</span></label>
+                        <select name="customer_type" id="customerTypeSelect" class="form-control">
+                            <option value="NON_CONTRACT">一般客戶（散客）</option>
+                            <option value="CONTRACT">合約客戶（月結）</option>
+                            <option value="PREPAID">預付客戶</option>
+                        </select>
+                        <small style="color: var(--text-muted); display: block; margin-top: 0.5rem;">
+                            一般客戶：每次寄件付款<br>
+                            合約客戶：公司配合，每月結算<br>
+                            預付客戶：需先儲值餘額
+                        </small>
+                    </div>
+
+                    <!-- 預付客戶專屬欄位 -->
+                    <div id="prepaidFields" style="display: none;">
+                        <div class="form-group">
+                            <label class="form-label">初始餘額</label>
+                            <input type="number" name="balance" class="form-control" value="0" min="0" step="0.01">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">預付方名稱</label>
+                            <input type="text" name="prepaid_by" class="form-control" placeholder="例如：台灣積體電路股份有限公司">
+                            <small style="color: var(--text-muted);">提供預付款項的公司或個人名稱</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 司機專屬欄位 -->
+            <div id="driverFields" style="display: none;">
+                <div
+                    style="background: rgba(var(--warning-rgb, 241, 196, 15), 0.1); padding: 1.5rem; border-radius: 8px; margin-bottom: 1rem;">
+                    <h4 style="margin-bottom: 1rem; color: var(--warning);">
+                        <i class="fas fa-truck"></i> 司機專屬資料
+                    </h4>
+
+                    <div class="form-group">
+                        <label class="form-label">車輛識別碼（車牌）</label>
+                        <input type="text" name="vehicle_id" class="form-control" placeholder="例如：ABC-1234">
+                    </div>
+                </div>
+            </div>
+
+            <!-- 倉儲人員專屬欄位 -->
+            <div id="warehouseFields" style="display: none;">
+                <div
+                    style="background: rgba(var(--secondary-rgb, 128, 128, 128), 0.1); padding: 1.5rem; border-radius: 8px; margin-bottom: 1rem;">
+                    <h4 style="margin-bottom: 1rem; color: var(--secondary);">
+                        <i class="fas fa-warehouse"></i> 倉儲人員專屬資料
+                    </h4>
+
+                    <div class="form-group">
+                        <label class="form-label">隸屬倉庫位置編號</label>
+                        <input type="text" name="warehouse_location_id" class="form-control" placeholder="例如：台北分揀中心">
+                    </div>
+                </div>
+            </div>
+
+            <!-- 提交按鈕 -->
+            <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                <button type="submit" class="btn btn-primary" style="flex: 1;">
+                    <i class="fas fa-check"></i> 建立帳號
+                </button>
+                <a href="{{ url_for('main.admin_users') }}" class="btn btn-outline"
+                    style="flex: 1; text-align: center;">
+                    取消
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const roleSelect = document.getElementById('roleSelect');
+        const customerFields = document.getElementById('customerFields');
+        const driverFields = document.getElementById('driverFields');
+        const warehouseFields = document.getElementById('warehouseFields');
+        const customerTypeSelect = document.getElementById('customerTypeSelect');
+        const prepaidFields = document.getElementById('prepaidFields');
+
+        // 角色選擇變化時
+        roleSelect.addEventListener('change', function () {
+            // 隱藏所有專屬欄位
+            customerFields.style.display = 'none';
+            driverFields.style.display = 'none';
+            warehouseFields.style.display = 'none';
+
+            // 根據選擇的角色顯示對應的欄位
+            switch (this.value) {
+                case 'customer':
+                    customerFields.style.display = 'block';
+                    break;
+                case 'driver':
+                    driverFields.style.display = 'block';
+                    break;
+                case 'warehouse':
+                    warehouseFields.style.display = 'block';
+                    break;
+            }
+        });
+
+        // 客戶類型選擇變化時
+        customerTypeSelect.addEventListener('change', function () {
+            if (this.value === 'PREPAID') {
+                prepaidFields.style.display = 'block';
+            } else {
+                prepaidFields.style.display = 'none';
+            }
+        });
+    });
+</script>
+{% endblock %}

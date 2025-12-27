@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block title %}帳號管理{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+        <h2>帳號管理</h2>
+        <a href="{{ url_for('main.admin_create_user') }}" class="btn btn-primary">
+            <i class="fas fa-user-plus"></i> 新增帳號
+        </a>
+    </div>
+
+    <div class="card">
+        <div style="overflow-x: auto;">
+            <table class="data-table" style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr>
+                        <th style="padding: 1rem; text-align: left; border-bottom: 2px solid var(--border-color);">ID
+                        </th>
+                        <th style="padding: 1rem; text-align: left; border-bottom: 2px solid var(--border-color);">帳號
+                        </th>
+                        <th style="padding: 1rem; text-align: left; border-bottom: 2px solid var(--border-color);">姓名
+                        </th>
+                        <th style="padding: 1rem; text-align: left; border-bottom: 2px solid var(--border-color);">Email
+                        </th>
+                        <th style="padding: 1rem; text-align: left; border-bottom: 2px solid var(--border-color);">電話
+                        </th>
+                        <th style="padding: 1rem; text-align: left; border-bottom: 2px solid var(--border-color);">角色
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in users %}
+                    <tr style="border-bottom: 1px solid var(--border-color);">
+                        <td style="padding: 1rem;">{{ user.id }}</td>
+                        <td style="padding: 1rem;">{{ user.username }}</td>
+                        <td style="padding: 1rem;">{{ user.full_name }}</td>
+                        <td style="padding: 1rem;">{{ user.email }}</td>
+                        <td style="padding: 1rem;">{{ user.phone }}</td>
+                        <td style="padding: 1rem;">
+                            {% if user.role.value == 'customer' %}
+                            <span class="badge"
+                                style="background: var(--info); color: white; padding: 0.25rem 0.75rem; border-radius: 4px;">客戶</span>
+                            {% elif user.role.value == 'driver' %}
+                            <span class="badge"
+                                style="background: var(--warning); color: white; padding: 0.25rem 0.75rem; border-radius: 4px;">司機</span>
+                            {% elif user.role.value == 'warehouse' %}
+                            <span class="badge"
+                                style="background: var(--secondary); color: white; padding: 0.25rem 0.75rem; border-radius: 4px;">倉儲人員</span>
+                            {% elif user.role.value == 'customer_service' %}
+                            <span class="badge"
+                                style="background: var(--success); color: white; padding: 0.25rem 0.75rem; border-radius: 4px;">客服人員</span>
+                            {% elif user.role.value == 'admin' %}
+                            <span class="badge"
+                                style="background: var(--danger); color: white; padding: 0.25rem 0.75rem; border-radius: 4px;">管理員</span>
+                            {% else %}
+                            <span class="badge"
+                                style="background: var(--text-muted); color: white; padding: 0.25rem 0.75rem; border-radius: 4px;">{{
+                                user.role.value }}</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="6" style="padding: 2rem; text-align: center; color: var(--text-muted);">
+                            目前沒有任何使用者
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div style="margin-top: 1.5rem;">
+        <a href="{{ url_for('main.dashboard') }}" class="btn btn-outline">
+            <i class="fas fa-arrow-left"></i> 返回儀表板
+        </a>
+    </div>
+</div>
+{% endblock %}

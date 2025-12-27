@@ -13,6 +13,10 @@
         </p>
 
         <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+            <a href="{{ url_for('main.admin_users') }}" class="btn btn-primary"
+                style="display: flex; align-items: center; gap: 0.5rem;">
+                <i class="fas fa-users"></i> 帳號管理
+            </a>
             <a href="{{ url_for('main.admin_pricing') }}" class="btn btn-primary"
                 style="display: flex; align-items: center; gap: 0.5rem;">
                 <i class="fas fa-dollar-sign"></i> 管理定價規則

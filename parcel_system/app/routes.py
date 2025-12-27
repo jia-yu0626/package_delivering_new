@@ -519,3 +519,118 @@ def search():
                           packages=packages, 
                           drivers=drivers, 
                           locations=locations)
+
+@main.route('/admin/users')
+@login_required
+def admin_users():
+    """管理員：使用者列表頁面"""
+    if session.get('user_role') != 'admin':
+        return "Unauthorized", 403
+    
+    users = services.get_all_users()
+    return render_template('admin_users.html', users=users)
+
+@main.route('/admin/create_user', methods=['GET', 'POST'])
+@login_required
+def admin_create_user():
+    """管理員：創建新帳號"""
+    if session.get('user_role') != 'admin':
+        return "Unauthorized", 403
+    
+    if request.method == 'POST':
+        # 基本欄位
+        username = request.form.get('username')
+        password = request.form.get('password')
+        full_name = request.form.get('full_name')
+        email = request.form.get('email')
+        phone = request.form.get('phone')
+        address = request.form.get('address', '')
+        role = request.form.get('role')
+        
+        try:
+            # 根據角色創建對應的用戶實體
+            if role == 'customer':
+                customer_type = request.form.get('customer_type', 'NON_CONTRACT')
+                new_user = models.Customer(
+                    username=username,
+                    full_name=full_name,
+                    email=email,
+                    phone=phone,
+                    address=address,
+                    role=models.UserRole.CUSTOMER,
+                    customer_type=models.CustomerType[customer_type]
+                )
+                
+                # 預付客戶的專屬欄位
+                if customer_type == 'PREPAID':
+                    balance = float(request.form.get('balance', 0))
+                    prepaid_by = request.form.get('prepaid_by', '')
+                    new_user.balance = balance
+                    new_user.prepaid_by = prepaid_by
+                    
+            elif role == 'driver':
+                vehicle_id = request.form.get('vehicle_id', '')
+                new_user = models.Driver(
+                    username=username,
+                    full_name=full_name,
+                    email=email,
+                    phone=phone,
+                    address=address,
+                    role=models.UserRole.DRIVER,
+                    vehicle_id=vehicle_id
+                )
+                
+            elif role == 'warehouse':
+                warehouse_location_id = request.form.get('warehouse_location_id', '')
+                new_user = models.WarehouseStaff(
+                    username=username,
+                    full_name=full_name,
+                    email=email,
+                    phone=phone,
+                    address=address,
+                    role=models.UserRole.WAREHOUSE,
+                    warehouse_location_id=warehouse_location_id
+                )
+                
+            elif role == 'customer_service':
+                new_user = models.Employee(
+                    username=username,
+                    full_name=full_name,
+                    email=email,
+                    phone=phone,
+                    address=address,
+                    role=models.UserRole.CS
+                )
+                
+            elif role == 'admin':
+                new_user = models.Employee(
+                    username=username,
+                    full_name=full_name,
+                    email=email,
+                    phone=phone,
+                    address=address,
+                    role=models.UserRole.ADMIN
+                )
+            else:
+                flash('無效的角色類型', 'error')
+                return redirect(url_for('main.admin_create_user'))
+            
+            new_user.set_password(password)
+            db.session.add(new_user)
+            db.session.commit()
+            
+            # 記錄操作日誌
+            services.log_audit(session['user_id'], '建立帳號', new_user.id, 
+                             f'管理員建立帳號：{username}，角色：{role}')
+            
+            flash(f'帳號 {username} 建立成功！', 'success')
+            return redirect(url_for('main.admin_users'))
+            
+        except Exception as e:
+            db.session.rollback()
+            if 'UNIQUE constraint failed' in str(e) or 'IntegrityError' in str(e):
+                flash('使用者名稱或 Email 已存在', 'error')
+            else:
+                flash(f'建立失敗：{str(e)}', 'error')
+    
+    return render_template('admin_create_user.html')
