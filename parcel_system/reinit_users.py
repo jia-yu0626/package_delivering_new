@@ -1,5 +1,5 @@
 from app import create_app, db, models
-from app.models import User, Customer, Employee, WarehouseStaff, Package, TrackingEvent, Bill, UserRole, CustomerType, PricingRule, DeliverySpeed
+from app.models import User, Customer, Employee, Driver, WarehouseStaff, Package, TrackingEvent, Bill, UserRole, CustomerType, PricingRule, DeliverySpeed
 
 app = create_app()
 
@@ -97,13 +97,14 @@ with app.app_context():
     users.append(u_admin)
 
     # 5. 司機 (Driver)
-    u_driver = Employee(
+    u_driver = Driver(
         username='driver', 
         full_name='司機 (Driver)', 
         email='driver@test.com', 
         phone='0900555555', 
         role=UserRole.DRIVER, 
-        department='物流部'
+        department='物流部',
+        vehicle_id='ABC-1234'  # 運輸載具識別碼 (貨車車牌)
     )
     u_driver.set_password('123456')
     users.append(u_driver)

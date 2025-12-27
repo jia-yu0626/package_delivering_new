@@ -140,6 +140,17 @@ class Employee(User):
         'polymorphic_identity': 'employee',
     }
 
+class Driver(Employee):
+    """司機類別 (繼承自 Employee，具備運輸載具資訊)"""
+    __tablename__ = 'drivers'
+    
+    id: Mapped[int] = mapped_column(ForeignKey('employees.id'), primary_key=True)
+    vehicle_id: Mapped[str] = mapped_column(String(50), nullable=True)  # 運輸載具識別碼 (貨車車牌)
+    
+    __mapper_args__ = {
+        'polymorphic_identity': 'driver',
+    }
+
 class Package(Base):
     """包裹主資料表格"""
     __tablename__ = 'packages'
