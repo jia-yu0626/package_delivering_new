@@ -3,13 +3,19 @@
 {% block title %}管理定價規則{% endblock %}
 
 {% block content %}
+{% set service_type_labels = {
+    'overnight': '隔夜達',
+    'two_day': '兩日達',
+    'standard': '標準速遞',
+    'economy': '經濟速遞'
+} %}
 <div class="container">
     <div style="margin-bottom: 2rem;">
         <a href="{{ url_for('main.dashboard') }}" style="color: var(--text-muted); text-decoration: none;">&larr;
             返回儀表板</a>
     </div>
 
-    <h2 style="margin-bottom: 2rem;">服務類型與定價規則 (Pricing Rules)</h2>
+    <h2 style="margin-bottom: 2rem;">服務類型與定價規則</h2>
 
     <div class="card">
         <table class="table">
@@ -17,8 +23,8 @@
                 <tr>
                     <th>ID</th>
                     <th>服務類型</th>
-                    <th>基本費 (Base Rate)</th>
-                    <th>每公斤費率 (Rate/Kg)</th>
+                    <th>基本費</th>
+                    <th>每公斤費率</th>
                     <th>操作</th>
                 </tr>
             </thead>
@@ -29,7 +35,7 @@
                 <tr>
                     <input type="hidden" name="rule_id" value="{{ rule.id }}" form="{{ form_id }}">
                     <td>{{ rule.id }}</td>
-                    <td><span class="badge badge-info">{{ rule.service_type.value }}</span></td>
+                    <td><span class="badge badge-info">{{ service_type_labels.get(rule.service_type.value, rule.service_type.value) }}</span></td>
                     <td>
                         <input type="number" step="0.1" name="base_rate" value="{{ rule.base_rate }}"
                             class="form-control" style="width: 100px; padding: 0.25rem;" form="{{ form_id }}">
