@@ -358,3 +358,81 @@ def log_audit(user_id, action, target_id=None, details=None):
     db.session.add(log_entry)
     db.session.commit()
     return log_entry
+
+def search_packages(tracking_number=None, customer_username=None, 
+                   date_from=None, date_to=None, 
+                   vehicle_id=None, warehouse_location=None):
+    """
+    多條件搜尋包裹
+    :param tracking_number: 追蹤編號 (模糊比對)
+    :param customer_username: 客戶帳號 (模糊比對)
+    :param date_from: 運送日期起始 (datetime)
+    :param date_to: 運送日期結束 (datetime)
+    :param vehicle_id: 運輸載具識別碼 (貨車車牌)
+    :param warehouse_location: 倉儲地點 (從 TrackingEvent 搜尋)
+    :return: 符合條件的包裹列表
+    """
+    query = db.select(models.Package)
+    
+    # 追蹤編號模糊搜尋
+    if tracking_number:
+        query = query.filter(models.Package.tracking_number.like(f"%{tracking_number}%"))
+    
+    # 客戶帳號搜尋 (透過 sender 關聯)
+    if customer_username:
+        query = query.join(models.Customer, models.Package.sender_id == models.Customer.id)
+        query = query.filter(models.Customer.username.like(f"%{customer_username}%"))
+    
+    # 運送日期範圍搜尋
+    if date_from:
+        query = query.filter(models.Package.created_at >= date_from)
+    if date_to:
+        query = query.filter(models.Package.created_at <= date_to)
+    
+    # 運輸載具識別碼搜尋 (透過 assigned_driver 關聯到 Driver)
+    if vehicle_id:
+        query = query.join(models.Driver, models.Package.assigned_driver_id == models.Driver.id)
+        query = query.filter(models.Driver.vehicle_id.like(f"%{vehicle_id}%"))
+    
+    # 倉儲地點搜尋 (透過 TrackingEvent 的 location)
+    if warehouse_location:
+        subquery = db.select(models.TrackingEvent.package_id).filter(
+            models.TrackingEvent.location.like(f"%{warehouse_location}%")
+        ).distinct()
+        query = query.filter(models.Package.id.in_(subquery))
+    
+    # 按建立時間排序
+    query = query.order_by(models.Package.created_at.desc())
+    
+    return db.session.execute(query).scalars().all()
+
+def get_all_drivers():
+    """
+    取得所有司機 (用於下拉選單)
+    :return: 司機列表，包含 id, full_name, vehicle_id
+    """
+    return db.session.execute(
+        db.select(models.Driver)
+    ).scalars().all()
+
+def get_all_warehouse_locations():
+    """
+    取得所有倉儲地點 (從 WarehouseStaff 和 TrackingEvent 取得)
+    :return: 倉儲地點列表 (不重複)
+    """
+    locations = set()
+    
+    # 從 WarehouseStaff 取得倉庫編號
+    warehouse_staff = db.session.execute(
+        db.select(models.WarehouseStaff.warehouse_location_id)
+        .filter(models.WarehouseStaff.warehouse_location_id.isnot(None))
+    ).scalars().all()
+    locations.update(warehouse_staff)
+    
+    # 從 TrackingEvent 取得所有掃描地點
+    event_locations = db.session.execute(
+        db.select(models.TrackingEvent.location).distinct()
+    ).scalars().all()
+    locations.update(event_locations)
+    
+    return sorted(list(locations))
