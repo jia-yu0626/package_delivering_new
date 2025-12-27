@@ -448,3 +448,74 @@ def edit_package(tracking_number):
             
     return render_template('edit_package.html', package=package)
 
+@main.route('/search', methods=['GET', 'POST'])
+@login_required
+def search():
+    """包裹多條件搜尋"""
+    # 只有客服、管理員、倉儲人員可以使用搜尋功能
+    if session.get('user_role') not in ['customer_service', 'admin', 'warehouse']:
+        flash('您沒有權限使用搜尋功能', 'error')
+        return redirect(url_for('main.dashboard'))
+    
+    packages = []
+    drivers = services.get_all_drivers()
+    locations = services.get_all_warehouse_locations()
+    
+    if request.method == 'POST':
+        # 取得搜尋條件
+        tracking_number = request.form.get('tracking_number', '').strip() or None
+        customer_username = request.form.get('customer_username', '').strip() or None
+        date_from_str = request.form.get('date_from', '').strip()
+        date_to_str = request.form.get('date_to', '').strip()
+        vehicle_id = request.form.get('vehicle_id', '').strip() or None
+        warehouse_location = request.form.get('warehouse_location', '').strip() or None
+        
+        # 轉換日期格式
+        date_from = None
+        date_to = None
+        if date_from_str:
+            try:
+                date_from = datetime.strptime(date_from_str, '%Y-%m-%d')
+            except ValueError:
+                flash('起始日期格式錯誤', 'error')
+        if date_to_str:
+            try:
+                # 設定為當天結束時間 (23:59:59)
+                date_to = datetime.strptime(date_to_str, '%Y-%m-%d').replace(hour=23, minute=59, second=59)
+            except ValueError:
+                flash('結束日期格式錯誤', 'error')
+        
+        # 執行搜尋
+        packages = services.search_packages(
+            tracking_number=tracking_number,
+            customer_username=customer_username,
+            date_from=date_from,
+            date_to=date_to,
+            vehicle_id=vehicle_id,
+            warehouse_location=warehouse_location
+        )
+        
+        # 記錄搜尋日誌
+        search_criteria = []
+        if tracking_number:
+            search_criteria.append(f'追蹤號:{tracking_number}')
+        if customer_username:
+            search_criteria.append(f'客戶:{customer_username}')
+        if date_from_str:
+            search_criteria.append(f'起始:{date_from_str}')
+        if date_to_str:
+            search_criteria.append(f'結束:{date_to_str}')
+        if vehicle_id:
+            search_criteria.append(f'車輛:{vehicle_id}')
+        if warehouse_location:
+            search_criteria.append(f'倉儲:{warehouse_location}')
+        
+        if search_criteria:
+            services.log_audit(session['user_id'], '搜尋包裹', None, ' | '.join(search_criteria) + f' (找到 {len(packages)} 筆)')
+        
+        flash(f'搜尋結果: 找到 {len(packages)} 筆包裹', 'info')
+    
+    return render_template('search.html', 
+                          packages=packages, 
+                          drivers=drivers, 
+                          locations=locations)
