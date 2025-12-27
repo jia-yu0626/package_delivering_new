@@ -44,9 +44,11 @@
             <div class="form-group">
                 <label class="form-label">配送速度</label>
                 <select name="delivery_speed" class="form-control">
+                    {% set speed_names = {'STANDARD': '標準配送', 'OVERNIGHT': '隔夜快遞', 'TWO_DAY': '兩日配送', 'ECONOMY': '經濟配送'}
+                    %}
                     {% for speed in ['STANDARD', 'OVERNIGHT', 'TWO_DAY', 'ECONOMY'] %}
-                    <option value="{{ speed }}" {% if package.delivery_speed.name==speed %}selected{% endif %}>{{ speed
-                        }}</option>
+                    <option value="{{ speed }}" {% if package.delivery_speed.name==speed %}selected{% endif %}>{{
+                        speed_names[speed] }}</option>
                     {% endfor %}
                 </select>
             </div>
