@@ -140,8 +140,65 @@ class Employee(User):
         'polymorphic_identity': 'employee',
     }
 
+class Admin(Employee):
+    """系統管理員類別 (繼承自 Employee，具備系統管理功能)"""
+    __tablename__ = 'admins'
+    
+    id: Mapped[int] = mapped_column(ForeignKey('employees.id'), primary_key=True)
+    admin_level: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)  # 管理員等級
+    
+    __mapper_args__ = {
+        'polymorphic_identity': 'admin',
+    }
+    
+    def get_all_users(self) -> List["User"]:
+        """
+        取得所有使用者列表
+        :return: 使用者列表
+        """
+        from . import services
+        return services.get_all_users()
+    
+    def get_all_pricing_rules(self) -> List["PricingRule"]:
+        """
+        取得所有定價規則
+        :return: 定價規則列表
+        """
+        from . import services
+        return services.get_all_pricing_rules()
+    
+    def update_pricing_rule(self, rule_id: int, base_rate: float, rate_per_kg: float) -> bool:
+        """
+        更新定價規則
+        :param rule_id: 規則 ID
+        :param base_rate: 基本費用
+        :param rate_per_kg: 每公斤費用
+        :return: 是否成功
+        """
+        from . import services
+        return services.update_pricing_rule(rule_id, base_rate, rate_per_kg)
+    
+    def create_user(self, user_data: dict) -> "User":
+        """
+        建立新使用者 (此方法在 routes.py 中實作，此處提供介面)
+        :param user_data: 使用者資料字典
+        :return: 新建立的使用者
+        """
+        # 注意：實際的建立邏輯較複雜，涉及不同角色的子類別建立
+        # 此方法作為介面定義，實際實作在 routes.py
+        raise NotImplementedError("Use routes.admin_create_user() for full implementation")
+    
+    def delete_user(self, user_id: int) -> bool:
+        """
+        刪除使用者 (此方法在 routes.py 中實作，此處提供介面)
+        :param user_id: 使用者 ID
+        :return: 是否成功
+        """
+        # 注意：刪除邏輯涉及關聯資料處理，實作在 routes.py
+        raise NotImplementedError("Use routes.admin_delete_user() for full implementation")
+
 class Driver(Employee):
-    """司機類別 (繼承自 Employee，具備運輸載具資訊)"""
+    """司機類別 (繼承自 Employee，具備運輸載具資訊及配送功能)"""
     __tablename__ = 'drivers'
     
     id: Mapped[int] = mapped_column(ForeignKey('employees.id'), primary_key=True)
@@ -150,6 +207,55 @@ class Driver(Employee):
     __mapper_args__ = {
         'polymorphic_identity': 'driver',
     }
+    
+    def get_assigned_packages(self) -> List["Package"]:
+        """
+        取得指派給此司機的包裹列表
+        :return: 包裹列表 (狀態為 OUT_FOR_DELIVERY、SORTING、PICKED_UP)
+        """
+        from . import services
+        return services.get_packages_for_driver(self.id)
+    
+    def deliver_package(self, tracking_number: str, description: str = "包裹已成功送達") -> bool:
+        """
+        將包裹標記為已送達
+        :param tracking_number: 包裹追蹤號碼
+        :param description: 送達描述
+        :return: 是否成功
+        """
+        from . import services
+        location = f"配送完成 - 司機 {self.full_name}"
+        return services.add_tracking_event(
+            tracking_number, 
+            PackageStatus.DELIVERED.name, 
+            location, 
+            description, 
+            user_id=self.id
+        )
+    
+    def report_exception(self, tracking_number: str, exception_type: str, description: str) -> bool:
+        """
+        回報包裹異常狀態
+        :param tracking_number: 包裹追蹤號碼
+        :param exception_type: 異常類型 (EXCEPTION, LOST, DELAYED, DAMAGED)
+        :param description: 異常描述
+        :return: 是否成功
+        """
+        from . import services
+        
+        # 驗證異常類型
+        allowed_exceptions = ['EXCEPTION', 'LOST', 'DELAYED', 'DAMAGED']
+        if exception_type not in allowed_exceptions:
+            return False
+        
+        location = f"司機回報 - {self.full_name} ({self.vehicle_id or 'N/A'})"
+        return services.add_tracking_event(
+            tracking_number, 
+            exception_type, 
+            location, 
+            description, 
+            user_id=self.id
+        )
 
 class Package(Base):
     """包裹主資料表格"""
@@ -257,6 +363,67 @@ class Bill(Base):
     customer: Mapped["Customer"] = relationship("Customer", back_populates="bills")
     package: Mapped["Package"] = relationship("Package", backref=backref("bill", uselist=False))
     payment_method: Mapped[Optional[PaymentMethod]] = mapped_column(Enum(PaymentMethod), nullable=True)
+
+class CustomerServiceStaff(Employee):
+    """客服人員類別 (繼承自 Employee，負責客戶服務相關功能)"""
+    __tablename__ = 'customer_service_staff'
+    
+    id: Mapped[int] = mapped_column(ForeignKey('employees.id'), primary_key=True)
+    service_area: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)  # 服務區域
+    
+    __mapper_args__ = {
+        'polymorphic_identity': 'customer_service',
+    }
+    
+    def search_customers(self, query: str) -> List["Customer"]:
+        """
+        搜尋客戶 (依姓名、電話或 Email)
+        :param query: 搜尋關鍵字
+        :return: 符合條件的客戶列表
+        """
+        from . import services
+        return services.search_users(query)
+    
+    def get_customer_detail(self, customer_id: int) -> Optional["Customer"]:
+        """
+        取得客戶詳細資料
+        :param customer_id: 客戶 ID
+        :return: 客戶物件
+        """
+        from . import services
+        return services.get_user_by_id(customer_id)
+    
+    def get_customer_packages(self, customer_id: int) -> List["Package"]:
+        """
+        取得客戶的所有包裹
+        :param customer_id: 客戶 ID
+        :return: 包裹列表
+        """
+        from . import services
+        return services.get_user_packages(customer_id)
+    
+    def get_customer_bills(self, customer_id: int) -> List["Bill"]:
+        """
+        取得客戶的所有帳單
+        :param customer_id: 客戶 ID
+        :return: 帳單列表
+        """
+        from . import services
+        return services.get_customer_bills(customer_id)
+    
+    def get_exception_packages(self) -> List["Package"]:
+        """
+        取得所有異常狀態的包裹 (用於監控)
+        :return: 異常包裹列表
+        """
+        from . import services
+        return services.get_packages_by_status([
+            PackageStatus.EXCEPTION,
+            PackageStatus.LOST,
+            PackageStatus.DELAYED,
+            PackageStatus.DAMAGED
+        ])
+
 
 class WarehouseStaff(Employee):
     """倉儲人員類別 (繼承自 Employee，具備操作包裹的方法)"""
