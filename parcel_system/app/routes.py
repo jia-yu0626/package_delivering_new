@@ -107,16 +107,25 @@ def dashboard():
         packages = services.get_user_packages(user_id)
         return render_template('dashboard_customer.html', packages=packages)
     elif role == 'customer_service':
-        # Get Exception Packages
-        exceptions = services.get_packages_by_status([
-            models.PackageStatus.EXCEPTION,
-            models.PackageStatus.LOST,
-            models.PackageStatus.DELAYED,
-            models.PackageStatus.DAMAGED
-        ])
+        # 使用 CustomerServiceStaff 類別方法
+        cs_staff = db.session.get(models.CustomerServiceStaff, user_id)
+        if cs_staff:
+            exceptions = cs_staff.get_exception_packages()
+        else:
+            exceptions = services.get_packages_by_status([
+                models.PackageStatus.EXCEPTION,
+                models.PackageStatus.LOST,
+                models.PackageStatus.DELAYED,
+                models.PackageStatus.DAMAGED
+            ])
         return render_template('dashboard_cs.html', exceptions=exceptions)
     elif role == 'driver':
-        packages = services.get_packages_for_driver(session['user_id'])
+        # 使用 Driver 類別方法
+        driver = db.session.get(models.Driver, user_id)
+        if driver:
+            packages = driver.get_assigned_packages()
+        else:
+            packages = services.get_packages_for_driver(user_id)
         return render_template('dashboard_employee.html', packages=packages, is_driver=True)
     elif role == 'admin':
         # Admin only sees pricing management
@@ -143,14 +152,22 @@ def cs_search_user():
          return "Unauthorized", 403
     
     query = request.form.get('query')
-    users = services.search_users(query)
-    # Re-render dashboard with search results
-    exceptions = services.get_packages_by_status([
+    
+    # 使用 CustomerServiceStaff 類別方法
+    cs_staff = db.session.get(models.CustomerServiceStaff, session['user_id'])
+    if cs_staff:
+        users = cs_staff.search_customers(query)
+        exceptions = cs_staff.get_exception_packages()
+    else:
+        # 若不是 CustomerServiceStaff (例如 admin)，則直接使用 services
+        users = services.search_users(query)
+        exceptions = services.get_packages_by_status([
             models.PackageStatus.EXCEPTION,
             models.PackageStatus.LOST,
             models.PackageStatus.DELAYED,
             models.PackageStatus.DAMAGED
-    ])
+        ])
+    
     return render_template('dashboard_cs.html', exceptions=exceptions, search_results=users, search_query=query)
 
 @main.route('/cs/customer/<int:user_id>')
@@ -158,14 +175,22 @@ def cs_search_user():
 def cs_customer_detail(user_id):
     if session.get('user_role') not in ['customer_service', 'admin']:
          return "Unauthorized", 403
-         
-    customer = services.get_user_by_id(user_id)
+    
+    # 使用 CustomerServiceStaff 類別方法
+    cs_staff = db.session.get(models.CustomerServiceStaff, session['user_id'])
+    if cs_staff:
+        customer = cs_staff.get_customer_detail(user_id)
+        packages = cs_staff.get_customer_packages(user_id) if customer else []
+        bills = cs_staff.get_customer_bills(user_id) if customer else []
+    else:
+        # 若不是 CustomerServiceStaff (例如 admin)，則直接使用 services
+        customer = services.get_user_by_id(user_id)
+        packages = services.get_user_packages(user_id) if customer else []
+        bills = services.get_customer_bills(user_id) if customer else []
+    
     if not customer:
         flash('User not found', 'error')
         return redirect(url_for('main.dashboard'))
-        
-    packages = services.get_user_packages(user_id)
-    bills = services.get_customer_bills(user_id)
     
     return render_template('cs_customer_detail.html', customer=customer, packages=packages, bills=bills)
 
@@ -174,20 +199,29 @@ def cs_customer_detail(user_id):
 def admin_pricing():
     if session.get('user_role') != 'admin':
          return "Unauthorized", 403
-         
+    
+    # 使用 Admin 類別方法
+    admin_user = db.session.get(models.Admin, session['user_id'])
+    
     if request.method == 'POST':
         rule_id = request.form.get('rule_id')
         base_rate = float(request.form.get('base_rate'))
         rate_per_kg = float(request.form.get('rate_per_kg'))
         
-        services.update_pricing_rule(rule_id, base_rate, rate_per_kg)
+        if admin_user:
+            admin_user.update_pricing_rule(rule_id, base_rate, rate_per_kg)
+        else:
+            services.update_pricing_rule(rule_id, base_rate, rate_per_kg)
         
         # 記錄定價規則更新日誌
         services.log_audit(session['user_id'], '更新定價', rule_id, f'更新定價規則：基本費 {base_rate}，每公斤 {rate_per_kg}')
         
         flash('定價規則已更新', 'success')
-        
-    rules = services.get_all_pricing_rules()
+    
+    if admin_user:
+        rules = admin_user.get_all_pricing_rules()
+    else:
+        rules = services.get_all_pricing_rules()
     return render_template('admin_pricing.html', rules=rules)
 
 
@@ -527,7 +561,12 @@ def admin_users():
     if session.get('user_role') != 'admin':
         return "Unauthorized", 403
     
-    users = services.get_all_users()
+    # 使用 Admin 類別方法
+    admin_user = db.session.get(models.Admin, session['user_id'])
+    if admin_user:
+        users = admin_user.get_all_users()
+    else:
+        users = services.get_all_users()
     return render_template('admin_users.html', users=users)
 
 @main.route('/admin/create_user', methods=['GET', 'POST'])
@@ -593,23 +632,27 @@ def admin_create_user():
                 )
                 
             elif role == 'customer_service':
-                new_user = models.Employee(
+                service_area = request.form.get('service_area', '')
+                new_user = models.CustomerServiceStaff(
                     username=username,
                     full_name=full_name,
                     email=email,
                     phone=phone,
                     address=address,
-                    role=models.UserRole.CS
+                    role=models.UserRole.CS,
+                    service_area=service_area
                 )
                 
             elif role == 'admin':
-                new_user = models.Employee(
+                admin_level = request.form.get('admin_level', 'standard')
+                new_user = models.Admin(
                     username=username,
                     full_name=full_name,
                     email=email,
                     phone=phone,
                     address=address,
-                    role=models.UserRole.ADMIN
+                    role=models.UserRole.ADMIN,
+                    admin_level=admin_level
                 )
             else:
                 flash('無效的角色類型', 'error')
