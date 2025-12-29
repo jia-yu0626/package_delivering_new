@@ -45,6 +45,7 @@ python run.py
 | 角色 (Role) | 帳號 (Username) | 名稱 | 備註 |
 |------------|----------------|------|------|
 | 一般客戶 | customer | 一般客戶 (Customer) | 非合約客戶 |
+| 預付客戶 | prepaid | 預付客戶 (Prepaid) | 預付客戶 |
 | 合約客戶 | contract | 合約客戶 (Contract) | 月結客戶 |
 | 客服人員 | cs | 客服人員 (Service) | 客服部 |
 | 管理員 | admin | 管理員 (Admin) | 管理部 |
